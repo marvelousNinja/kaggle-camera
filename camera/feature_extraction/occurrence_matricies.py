@@ -2,11 +2,10 @@ import numpy as np
 from camera.interpolation.metrics import difference
 from camera.interpolation.nearest_neighbour import interpolate_bayer
 
-def occurrence_matrix(image):
+def occurrence_matrix(image, quantization=2, threshold=3):
     interpolated_image = interpolate_bayer(image)
-    threshold = 2
     # TODO AS: Since diff is later used as index, make sure it is >= 0
-    diff = difference(image, interpolated_image, quantization=2, threshold=threshold) + threshold
+    diff = difference(image, interpolated_image, quantization=quantization, threshold=threshold) + threshold
     red, green, blue = diff[::, ::, 0], diff[::, ::, 1], diff[::, ::, 2]
     pattern_dim = 2 * threshold + 1
     patterns = np.zeros((pattern_dim, pattern_dim, pattern_dim))
