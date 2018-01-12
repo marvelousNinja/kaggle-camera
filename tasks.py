@@ -14,7 +14,7 @@ def process_patch(image, i, j, size, threshold):
 def extr(ctx):
     image_id = 0
     patch_size = 512
-    threshold = 2
+    threshold = 3
     delayed_process_patch = delayed(process_patch)
 
     with Parallel(n_jobs=-1, backend='threading') as parallel:
@@ -25,7 +25,9 @@ def extr(ctx):
                         # TODO AS: Some images have second thumbnail frame
                         continue
                     for i in range(image.shape[0] // patch_size):
-                       image_patches = parallel(delayed_process_patch(image, i, j, patch_size, threshold) for j in range(image.shape[1] // patch_size))
+                        img = image[:, :, 0].astype(np.int16)
+                        image_patches = parallel(delayed_process_patch(img, i, j, patch_size, threshold) for j in range(image.shape[1] // patch_size))
+
                     df = pd.DataFrame(image_patches)
                     df['image_id'] = image_id
                     df['label'] = label
