@@ -1,10 +1,11 @@
 from invoke import task
-from camera.shared.data import get_all_labels, load_images
+from camera.shared.data import get_all_labels, load_images, get_image_paths
 from camera.feature_extraction.occurrence_matricies import occurrence_matrix
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from joblib import Parallel, delayed
+from skimage import io
 
 def process_patch(image, i, j, size, threshold):
     patch = image[i * size:(i + 1) * size, j * size:(j + 1) * size]
@@ -25,7 +26,8 @@ def extr(ctx):
 
     with Parallel(n_jobs=-1, backend='threading') as parallel:
         for label in tqdm(get_all_labels()):
-            for image in tqdm(load_images(label)[:20]):
+            for image_path in tqdm(get_image_paths(label)):
+                image = io.imread(image_path)
                 try:
                     if (image.shape == ()):
                         # TODO AS: Some images have second thumbnail frame
@@ -45,9 +47,10 @@ def extr(ctx):
                     diff = np.floor(diff).astype(np.int)
                     # TODO AS: Performance eater
                     np.clip(diff, a_min=-threshold, a_max=threshold, out=diff)
+                    diff += threshold
 
                     # 3. For each patch, calculate co-occurrence matrix
-                    processed_patches = [delayed_process_patch(diff, i, j, size, threshold) for i in range(diff.shape[0] // size) for j in range(diff.shape[1] // size)]
+                    processed_patches = parallel([delayed_process_patch(diff, i, j, size, threshold) for i in range(diff.shape[0] // size) for j in range(diff.shape[1] // size)])
 
                     # 4. Append information to the csv
                     df = pd.DataFrame(processed_patches)
@@ -55,6 +58,5 @@ def extr(ctx):
                     df['label'] = label
                     df.to_csv('./extracted_features.csv', mode='a', header=False)
                 except Exception as err:
-                    raise err
                     tqdm.write('Error on image {} with label {}: {}'.format(image_id, label, err))
                 image_id += 1

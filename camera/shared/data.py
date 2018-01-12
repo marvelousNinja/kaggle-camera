@@ -1,4 +1,5 @@
 import os
+import glob
 from skimage import io
 
 def load_sample_image():
@@ -12,3 +13,7 @@ def load_images(label):
 def get_all_labels():
     dir_path = os.path.dirname(os.path.realpath(__file__)) + '/train'
     return [dir for dir in os.listdir(dir_path) if not dir.startswith('.')]
+
+def get_image_paths(label):
+    pattern = os.path.dirname(os.path.realpath(__file__)) + '/train/{}/*.[jJ][pP][gG]'.format(label)
+    return glob.glob(pattern)
