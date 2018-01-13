@@ -1,5 +1,5 @@
 from invoke import task
-from cv2 import imread
+import cv2
 from tqdm import tqdm
 import numpy as np
 from joblib import Parallel, delayed
@@ -26,8 +26,8 @@ def extr(ctx):
     with Parallel(n_jobs=-1, backend='threading') as parallel:
         with open('./extracted_features.csv', 'a') as output_file:
             for label in tqdm(get_all_labels()):
-                for image_path in tqdm(get_image_paths(label)[:40]):
-                    image = imread(image_path)
+                for image_path in tqdm(get_image_paths(label)):
+                    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
                     # try:
                     if (image.shape == ()):
                         # TODO AS: Some images have second thumbnail frame
