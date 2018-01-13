@@ -1,11 +1,10 @@
 from invoke import task
-from camera.shared.data import get_all_labels, load_images, get_image_paths
-from camera.feature_extraction.occurrence_matricies import occurrence_matrix
+from cv2 import imread
 from tqdm import tqdm
-import pandas as pd
 import numpy as np
 from joblib import Parallel, delayed
-from skimage import io
+from camera.shared.data import get_all_labels, load_images, get_image_paths
+from camera.feature_extraction.occurrence_matricies import occurrence_matrix
 
 def process_patch(image, i, j, size, threshold):
     patch = image[i * size:(i + 1) * size, j * size:(j + 1) * size]
@@ -25,10 +24,11 @@ def extr(ctx):
     delayed_process_patch = delayed(process_patch)
 
     with Parallel(n_jobs=-1, backend='threading') as parallel:
-        for label in tqdm(get_all_labels()):
-            for image_path in tqdm(get_image_paths(label)):
-                image = io.imread(image_path)
-                try:
+        with open('./extracted_features.csv', 'a') as output_file:
+            for label in tqdm(get_all_labels()):
+                for image_path in tqdm(get_image_paths(label)[:40]):
+                    image = imread(image_path)
+                    # try:
                     if (image.shape == ()):
                         # TODO AS: Some images have second thumbnail frame
                         continue
@@ -50,13 +50,15 @@ def extr(ctx):
                     diff += threshold
 
                     # 3. For each patch, calculate co-occurrence matrix
-                    processed_patches = parallel([delayed_process_patch(diff, i, j, size, threshold) for i in range(diff.shape[0] // size) for j in range(diff.shape[1] // size)])
+                    processed_patches = np.array(parallel([delayed_process_patch(diff, i, j, size, threshold) for i in range(diff.shape[0] // size) for j in range(diff.shape[1] // size)]))
 
                     # 4. Append information to the csv
-                    df = pd.DataFrame(processed_patches)
-                    df['image_id'] = image_id
-                    df['label'] = label
-                    df.to_csv('./extracted_features.csv', mode='a', header=False)
-                except Exception as err:
-                    tqdm.write('Error on image {} with label {}: {}'.format(image_id, label, err))
-                image_id += 1
+                    df = np.c_[
+                        processed_patches,
+                        np.full(processed_patches.shape[0], image_id),
+                        np.full(processed_patches.shape[0], label)]
+
+                    np.savetxt(output_file, df, delimiter=',', fmt='%s')
+                    # except Exception as err:
+                    #     tqdm.write('Error on image {} with label {}: {}'.format(image_id, label, err))
+                    image_id += 1
