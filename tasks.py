@@ -3,8 +3,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from joblib import Parallel, delayed
-from camera.shared.data import get_all_labels, load_images, get_image_paths
-from camera.feature_extraction.occurrence_matricies import occurrence_matrix
+from camera.shared.data import get_all_labels, get_image_paths
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report

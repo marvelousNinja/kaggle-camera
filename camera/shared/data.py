@@ -1,5 +1,6 @@
 import os
 import glob
+from skimage import io
 
 def load_sample_image():
     dir_path = os.path.dirname(os.path.realpath(__file__))
