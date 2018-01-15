@@ -36,7 +36,7 @@ def extract(ctx):
                         continue
 
                     # 1. Interpolate
-                    red_image = image[:, :, 0].astype(np.float)
+                    red_image = image[:, :, 0].astype(np.int16)
                     interpolated_image = np.array(red_image)
                     true_red = red_image[1::2, 0::2]
                     interpolated_image[0::2, 0::2] = true_red
@@ -45,8 +45,7 @@ def extract(ctx):
 
                     # 2. Calculate difference, quantize and clip
                     diff = red_image - interpolated_image
-                    diff /= quantization
-                    diff = np.floor(diff).astype(np.int)
+                    diff //= quantization
                     # TODO AS: Performance eater
                     np.clip(diff, a_min=-threshold, a_max=threshold, out=diff)
                     diff += threshold
