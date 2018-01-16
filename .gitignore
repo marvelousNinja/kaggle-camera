@@ -41,6 +41,8 @@ config.rst
 *.json
 *.png
 *.jpg
+*.JPG
 *.tif
 logdir
 .cache
+.kaggle-cli
