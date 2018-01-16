@@ -4,139 +4,114 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from joblib import Parallel, delayed
-from camera.data import get_all_labels, get_image_paths
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from dotenv import load_dotenv, find_dotenv
-import matplotlib.pyplot as plt
+from camera.data import list_dirs_in, list_images_in
 
 load_dotenv(find_dotenv())
 
-def process_patch(image, i, j, size, threshold):
-    patch = image[i * size:(i + 1) * size, j * size:(j + 1) * size]
-    residual_dimension = 2 * threshold + 1
-    patterns = np.zeros((residual_dimension, residual_dimension, residual_dimension), dtype=np.int)
-    # TODO AS: Performance eater
-    np.add.at(patterns, [patch[::2, ::2], patch[::2, 1::2], patch[1::2, 1::2]], 1)
-    patterns = patterns / (patch.shape[0] * patch.shape[1] / 4)
-    return patterns.reshape(-1)
-
-def process_red_green_patch(image, i, j, size, threshold):
-    patch = image[i * size:(i + 1) * size, j * size:(j + 1) * size]
-    residual_dimension = 2 * threshold + 1
-    patterns = np.zeros((residual_dimension, residual_dimension, residual_dimension), dtype=np.int)
-    # TODO AS: Performance eater
-    np.add.at(patterns, [patch[::2, ::2, 0], patch[::2, 1::2, 0], patch[0::2, 1::2, 1]], 1)
-    np.add.at(patterns, [patch[1::2, 1::2, 0], patch[::2, 1::2, 0], patch[0::2, 1::2, 1]], 1)
-    patterns = patterns / (patch.shape[0] * patch.shape[1] / 4)
-    return patterns.reshape(-1)
-
 @task
-def extract_red(ctx):
+def extract_intra_features(_):
     image_id = 0
-    size = 512
     threshold = 3
     quantization = 2
-    delayed_process_patch = delayed(process_patch)
+    data_dir = os.environ['DATA_DIR']
+    output_dir = os.path.join(data_dir, 'intra_channel_features')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    with Parallel(n_jobs=-1, backend='threading') as parallel:
-        with open('./extracted_features.csv', 'a') as output_file:
-            for label in tqdm(get_all_labels()):
-                for image_path in tqdm(get_image_paths(label)):
-                    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
-                    # try:
-                    if (image.shape == ()):
-                        # TODO AS: Some images have second thumbnail frame
-                        continue
+    with open(output_dir + '/intra_channel_features.csv', 'a') as output_file:
+        for image_path in tqdm(list_images_in(data_dir + '/transformed_patches')):
+            image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
 
-                    # 1. Interpolate
-                    red_image = image[:, :, 0].astype(np.int16)
-                    interpolated_image = np.array(red_image)
-                    true_red = red_image[1::2, 0::2]
-                    interpolated_image[0::2, 0::2] = true_red
-                    interpolated_image[1::2, 1::2] = true_red
-                    interpolated_image[0::2, 1::2] = true_red
+            # 0. Extract information from filename
+            name = os.path.splitext(os.path.basename(image_path))[0]
+            label, image_id, transform, _ = name.split('_')
 
-                    # 2. Calculate difference, quantize and clip
-                    diff = red_image - interpolated_image
-                    diff //= quantization
-                    # TODO AS: Performance eater
-                    np.clip(diff, a_min=-threshold, a_max=threshold, out=diff)
-                    diff += threshold
+            # 1. Interpolate
+            red_image = image[:, :, 0].astype(np.int16)
+            interpolated_image = np.array(red_image)
+            true_red = red_image[1::2, 0::2]
+            interpolated_image[0::2, 0::2] = true_red
+            interpolated_image[1::2, 1::2] = true_red
+            interpolated_image[0::2, 1::2] = true_red
 
-                    # 3. For each patch, calculate co-occurrence matrix
-                    processed_patches = np.array(parallel([delayed_process_patch(diff, i, j, size, threshold) for i in range(diff.shape[0] // size) for j in range(diff.shape[1] // size)]))
+            # 2. Calculate difference, quantize and clip
+            diff = red_image - interpolated_image
+            diff //= quantization
+            # TODO AS: Performance eater
+            np.clip(diff, a_min=-threshold, a_max=threshold, out=diff)
+            diff += threshold
 
-                    # 4. Append information to the csv
-                    df = np.c_[
-                        processed_patches,
-                        np.full(processed_patches.shape[0], image_id),
-                        np.full(processed_patches.shape[0], label)]
+            # 3. Calculate co-occurrence matrix
+            residual_dimension = 2 * threshold + 1
+            patterns = np.zeros((residual_dimension, residual_dimension, residual_dimension), dtype=np.int)
+            # TODO AS: Performance eater
+            np.add.at(patterns, [diff[::2, ::2], diff[::2, 1::2], diff[1::2, 1::2]], 1)
+            patterns = patterns / (diff.shape[0] * diff.shape[1] / 4)
 
-                    np.savetxt(output_file, df, delimiter=',', fmt='%s')
-                    # except Exception as err:
-                    #     tqdm.write('Error on image {} with label {}: {}'.format(image_id, label, err))
-                    image_id += 1
+            # 4. Append information to the csv
+            features = np.append(patterns.reshape(-1), [transform != 'unalt', image_id, label])
+            np.savetxt(output_file, [features], delimiter=',', fmt='%s')
 
 @task
-def extract_red_green(ctx):
-    image_id = 0
-    size = 512
+def extract_inter_features(_):
     threshold = 3
     quantization = 2
-    delayed_process_red_green_patch = delayed(process_red_green_patch)
+    data_dir = os.environ['DATA_DIR']
+    output_dir = os.path.join(data_dir, 'inter_channel_features')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    with Parallel(n_jobs=-1, backend='threading') as parallel:
-        with open('./red.green.extracted_features.csv', 'a') as output_file:
-            for label in tqdm(get_all_labels()):
-                for image_path in tqdm(get_image_paths(label)):
-                    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
-                    # try:
-                    if (image.shape == ()):
-                        # TODO AS: Some images have second thumbnail frame
-                        continue
+    with open(output_dir + '/inter_channel_features.csv', 'a') as output_file:
+        for image_path in tqdm(list_images_in(data_dir + '/transformed_patches')):
+            image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
 
-                    # 1. Interpolate
-                    red_green_image = image[:, :, :2].astype(np.int32)
-                    interpolated_image = np.array(red_green_image)
+            # 0. Extract information from filename
+            name = os.path.splitext(os.path.basename(image_path))[0]
+            label, image_id, transform, _ = name.split('_')
 
-                    true_red = red_green_image[1::2, 0::2, 0]
-                    interpolated_image[0::2, 0::2, 0] = true_red
-                    interpolated_image[1::2, 1::2, 0] = true_red
-                    interpolated_image[0::2, 1::2, 0] = true_red
+            # 1. Interpolate
+            red_green_image = image[:, :, :2].astype(np.int32)
+            interpolated_image = np.array(red_green_image)
 
-                    true_green_1 = red_green_image[0::2, 0::2, 1]
-                    true_green_2 = red_green_image[1::2, 1::2, 1]
-                    interpolated_image[0::2, 1::2, 1] = true_green_1
-                    interpolated_image[1::2, 0::2, 1] = true_green_2
+            true_red = red_green_image[1::2, 0::2, 0]
+            interpolated_image[0::2, 0::2, 0] = true_red
+            interpolated_image[1::2, 1::2, 0] = true_red
+            interpolated_image[0::2, 1::2, 0] = true_red
 
-                    # 2. Calculate difference, quantize and clip
-                    diff = red_green_image - interpolated_image
-                    diff //= quantization
-                    # TODO AS: Performance eater
-                    np.clip(diff, a_min=-threshold, a_max=threshold, out=diff)
-                    diff += threshold
+            true_green_1 = red_green_image[0::2, 0::2, 1]
+            true_green_2 = red_green_image[1::2, 1::2, 1]
+            interpolated_image[0::2, 1::2, 1] = true_green_1
+            interpolated_image[1::2, 0::2, 1] = true_green_2
 
-                    # 3. For each patch, calculate co-occurrence matrix
-                    processed_patches = np.array(parallel([delayed_process_red_green_patch(diff, i, j, size, threshold) for i in range(diff.shape[0] // size) for j in range(diff.shape[1] // size)]))
+            # 2. Calculate difference, quantize and clip
+            diff = red_green_image - interpolated_image
+            diff //= quantization
+            # TODO AS: Performance eater
+            np.clip(diff, a_min=-threshold, a_max=threshold, out=diff)
+            diff += threshold
 
-                    # 4. Append information to the csv
-                    df = np.c_[
-                        processed_patches,
-                        np.full(processed_patches.shape[0], image_id),
-                        np.full(processed_patches.shape[0], label)]
+            # 3. Calculate co-occurrence matrix
+            residual_dimension = 2 * threshold + 1
+            patterns = np.zeros((residual_dimension, residual_dimension, residual_dimension), dtype=np.int)
+            # TODO AS: Performance eater
+            np.add.at(patterns, [diff[::2, ::2, 0], diff[::2, 1::2, 0], diff[0::2, 1::2, 1]], 1)
+            np.add.at(patterns, [diff[1::2, 1::2, 0], diff[::2, 1::2, 0], diff[0::2, 1::2, 1]], 1)
+            patterns = patterns / (diff.shape[0] * diff.shape[1] / 4)
 
-                    np.savetxt(output_file, df, delimiter=',', fmt='%s')
-                    # # except Exception as err:
-                    # #     tqdm.write('Error on image {} with label {}: {}'.format(image_id, label, err))
-                    image_id += 1
-
+            # 4. Append information to the csv
+            features = np.append(patterns.reshape(-1), [transform != 'unalt', image_id, label])
+            np.savetxt(output_file, [features], delimiter=',', fmt='%s')
 
 @task
-def predict(ctx):
-    intra_channel_features = pd.read_csv('./red.green.extracted_features.csv')
-    inter_channel_features = pd.read_csv('./extracted_features.csv')
+def predict(_):
+    data_dir = os.environ['DATA_DIR']
+
+    intra_channel_features = pd.read_csv(data_dir + '/intra_channel_features/intra_channel_features.csv')
+    inter_channel_features = pd.read_csv(data_dir + '/inter_channel_features/inter_channel_features.csv')
 
     image_id_column = inter_channel_features.columns[-2]
     target_column = inter_channel_features.columns[-1]
@@ -158,7 +133,7 @@ def predict(ctx):
     X_test, y_test = full_data[~train_mask], target[~train_mask]
 
     params = {
-        'n_estimators': 100
+        'n_estimators': 10
     }
 
     model = RandomForestClassifier(**params)
@@ -182,31 +157,32 @@ def transform_and_crop(_):
     transforms = {
         'unalt': lambda image: image,
         'flip': flip_horizontally,
-        'gamma80': lambda image: adjust_gamma(image, 0.8),
-        'gamma120': lambda image: adjust_gamma(image, 1.2),
-        'jpeg70': lambda image: jpeg_compress(image, 70),
-        'jpeg90': lambda image: jpeg_compress(image, 90),
-        'resize50': lambda image: resize(image, 0.5),
-        'resize80': lambda image: resize(image, 0.8),
-        'resize150': lambda image: resize(image, 1.5),
-        'resize200': lambda image: resize(image, 2.0) }
+        # 'gamma80': lambda image: adjust_gamma(image, 0.8),
+        # 'gamma120': lambda image: adjust_gamma(image, 1.2),
+        # 'jpeg70': lambda image: jpeg_compress(image, 70),
+        # 'jpeg90': lambda image: jpeg_compress(image, 90),
+        # 'resize50': lambda image: resize(image, 0.5),
+        # 'resize80': lambda image: resize(image, 0.8),
+        # 'resize150': lambda image: resize(image, 1.5),
+        # 'resize200': lambda image: resize(image, 2.0)
+    }
 
-    with Parallel(n_jobs=-1, backend='threading') as parallel:
-        for label in tqdm(get_all_labels(data_dir)):
-            image_id = 0
-            for image_path in tqdm(get_image_paths(label, data_dir)):
-                image = cv2.imread(image_path)
-                for transform_name, transform in transforms.items():
-                    transformed_image = transform(image)
-                    # TODO AS: Alternative cropping strategies
-                    center_x = image.shape[0] // 2 - 1
-                    center_y = image.shape[1] // 2 - 1
-                    top_x, top_y = center_x - crop_size // 2, center_y - crop_size // 2
-                    patch_id = 0
-                    patch = transformed_image[top_x:top_x + crop_size, top_y:top_y + crop_size]
-                    filename = f'{label}_{image_id}_{transform_name}_{patch_id}.png'
-                    cv2.imwrite(os.path.join(output_dir, filename), patch)
-                image_id += 1
+    for label in tqdm(list_dirs_in(data_dir + '/train')):
+        image_id = 0
+        for image_path in tqdm(list_images_in(data_dir + '/' + label)):
+            image = cv2.imread(image_path)
+            for transform_name, transform in transforms.items():
+                transformed_image = transform(image)
+                # TODO AS: Alternative cropping strategies
+                center_x = image.shape[0] // 2 - 1
+                center_y = image.shape[1] // 2 - 1
+                top_x, top_y = center_x - crop_size // 2, center_y - crop_size // 2
+                patch_id = 0
+                patch = transformed_image[top_x:top_x + crop_size, top_y:top_y + crop_size]
+                filename = f'{label}_{image_id}_{transform_name}_{patch_id}.png'
+                cv2.imwrite(os.path.join(output_dir, filename), patch)
+            image_id += 1
+
 @task
 def download(ctx):
     competition = os.environ['KAGGLE_COMPETITION']
