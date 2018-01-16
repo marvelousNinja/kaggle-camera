@@ -171,8 +171,10 @@ def download(ctx):
     username = os.environ['KAGGLE_USERNAME']
     password = os.environ['KAGGLE_PASSWORD']
     data_dir = os.environ['DATA_DIR']
-    ctx.run(f'kg download -c {competition} -u {username} -p {password}', pty=True)
-    ctx.run(f'unzip test.zip -d {data_dir}')
-    ctx.run(f'unzip train.zip -d {data_dir}')
-    ctx.run(f'unzip sample_submission.csv.zip -d {data_dir}')
-    ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
+
+    with ctx.cd(data_dir):
+        ctx.run(f'kg download -c {competition} -u {username} -p {password}', pty=True)
+        ctx.run(f'unzip test.zip -d {data_dir}')
+        ctx.run(f'unzip train.zip -d {data_dir}')
+        ctx.run(f'unzip sample_submission.csv.zip -d {data_dir}')
+        ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
