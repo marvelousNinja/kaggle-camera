@@ -93,8 +93,6 @@ def extract_red_green(ctx):
                         continue
 
                     # 1. Interpolate
-                    # G  B
-                    # R  G
                     red_green_image = image[:, :, :2].astype(np.int32)
                     interpolated_image = np.array(red_green_image)
 
@@ -132,22 +130,30 @@ def extract_red_green(ctx):
 
 @task
 def predict(ctx):
-    df = pd.read_csv('./red.green.extracted_features.csv')
+    intra_channel_features = pd.read_csv('./red.green.extracted_features.csv')
+    inter_channel_features = pd.read_csv('./extracted_features.csv')
 
-    image_id = df.columns[-2]
-    target = df.columns[-1]
+    image_id_column = inter_channel_features.columns[-2]
+    target_column = inter_channel_features.columns[-1]
 
-    train = df[df[image_id] % 10 != 0]
-    test = df[df[image_id] % 10 == 0]
+    image_id = inter_channel_features[image_id_column]
+    target = inter_channel_features[target_column]
 
-    X_train, y_train = train.drop([image_id, target], axis=1), train[target]
-    X_test, y_test = test.drop([image_id, target], axis=1), test[target]
+    intra_channel_features.drop([image_id_column, target_column], axis=1, inplace=True)
+    inter_channel_features.drop([image_id_column, target_column], axis=1, inplace=True)
 
-    X_train['zero_count'] = (X_train == 0).astype(int).sum(axis=1)
-    X_test['zero_count'] = (X_test == 0).astype(int).sum(axis=1)
+    full_data = pd.concat([intra_channel_features, inter_channel_features], axis=1)
+
+    full_data['zero_count'] = (full_data == 0).astype(int).sum(axis=1)
+    full_data['zero_count'] = (full_data == 0).astype(int).sum(axis=1)
+
+    train_mask = image_id % 10 != 0
+
+    X_train, y_train = full_data[train_mask], target[train_mask]
+    X_test, y_test = full_data[~train_mask], target[~train_mask]
 
     params = {
-        'n_estimators': 10
+        'n_estimators': 100
     }
 
     model = RandomForestClassifier(**params)
