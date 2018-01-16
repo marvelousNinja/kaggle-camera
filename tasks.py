@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from dotenv import load_dotenv, find_dotenv
+import matplotlib.pyplot as plt
 
 load_dotenv(find_dotenv())
 
@@ -165,6 +166,47 @@ def predict(ctx):
     predictions = model.predict(X_test)
     print(classification_report(y_test, predictions))
 
+from camera.transforms import adjust_gamma
+from camera.transforms import flip_horizontally
+from camera.transforms import jpeg_compress
+from camera.transforms import resize
+
+@task
+def transform_and_crop(_):
+    crop_size = 512
+    data_dir = os.environ['DATA_DIR']
+    output_dir = os.path.join(data_dir, 'transformed_patches')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    transforms = {
+        'unalt': lambda image: image,
+        'flip': flip_horizontally,
+        'gamma80': lambda image: adjust_gamma(image, 0.8),
+        'gamma120': lambda image: adjust_gamma(image, 1.2),
+        'jpeg70': lambda image: jpeg_compress(image, 70),
+        'jpeg90': lambda image: jpeg_compress(image, 90),
+        'resize50': lambda image: resize(image, 0.5),
+        'resize80': lambda image: resize(image, 0.8),
+        'resize150': lambda image: resize(image, 1.5),
+        'resize200': lambda image: resize(image, 2.0) }
+
+    with Parallel(n_jobs=-1, backend='threading') as parallel:
+        for label in tqdm(get_all_labels()):
+            image_id = 0
+            for image_path in tqdm(get_image_paths(label)):
+                image = cv2.imread(image_path)
+                for transform_name, transform in transforms.items():
+                    transformed_image = transform(image)
+                    # TODO AS: Alternative cropping strategies
+                    center_x = image.shape[0] // 2 - 1
+                    center_y = image.shape[1] // 2 - 1
+                    top_x, top_y = center_x - crop_size // 2, center_y - crop_size // 2
+                    patch_id = 0
+                    patch = transformed_image[top_x:top_x + crop_size, top_y:top_y + crop_size]
+                    filename = f'{label}_{image_id}_{transform_name}_{patch_id}.png'
+                    cv2.imwrite(os.path.join(output_dir, filename), patch)
+                image_id += 1
 @task
 def download(ctx):
     competition = os.environ['KAGGLE_COMPETITION']
