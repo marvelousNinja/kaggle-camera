@@ -46,3 +46,4 @@ config.rst
 logdir
 .cache
 .kaggle-cli
+.env
