@@ -174,3 +174,4 @@ def download(ctx):
     ctx.run(f'kg download -c {competition} -u {username} -p {password}', pty=True)
     ctx.run(f'unzip test.zip -d {data_dir}')
     ctx.run(f'unzip train.zip -d {data_dir}')
+    ctx.run('rm -f test.zip train.zip')
