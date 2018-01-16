@@ -169,7 +169,7 @@ def transform_and_crop(_):
 
     for label in tqdm(list_dirs_in(data_dir + '/train')):
         image_id = 0
-        for image_path in tqdm(list_images_in(data_dir + '/' + label)):
+        for image_path in tqdm(list_images_in(data_dir + '/train/' + label)):
             image = cv2.imread(image_path)
             for transform_name, transform in transforms.items():
                 transformed_image = transform(image)
