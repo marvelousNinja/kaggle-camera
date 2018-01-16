@@ -4,7 +4,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from joblib import Parallel, delayed
-from camera.shared.data import get_all_labels, get_image_paths
+from camera.data import get_all_labels, get_image_paths
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
@@ -192,9 +192,9 @@ def transform_and_crop(_):
         'resize200': lambda image: resize(image, 2.0) }
 
     with Parallel(n_jobs=-1, backend='threading') as parallel:
-        for label in tqdm(get_all_labels()):
+        for label in tqdm(get_all_labels(data_dir)):
             image_id = 0
-            for image_path in tqdm(get_image_paths(label)):
+            for image_path in tqdm(get_image_paths(label, data_dir)):
                 image = cv2.imread(image_path)
                 for transform_name, transform in transforms.items():
                     transformed_image = transform(image)
