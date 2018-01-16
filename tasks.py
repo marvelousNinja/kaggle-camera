@@ -1,3 +1,4 @@
+import os
 from invoke import task
 import cv2
 from tqdm import tqdm
@@ -7,6 +8,9 @@ from camera.shared.data import get_all_labels, get_image_paths
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 def process_patch(image, i, j, size, threshold):
     patch = image[i * size:(i + 1) * size, j * size:(j + 1) * size]
@@ -160,3 +164,13 @@ def predict(ctx):
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
     print(classification_report(y_test, predictions))
+
+@task
+def download(ctx):
+    competition = os.environ['KAGGLE_COMPETITION']
+    username = os.environ['KAGGLE_USERNAME']
+    password = os.environ['KAGGLE_PASSWORD']
+    data_dir = os.environ['DATA_DIR']
+    ctx.run(f'kg download -c {competition} -u {username} -p {password}', pty=True)
+    ctx.run(f'unzip test.zip -d {data_dir}')
+    ctx.run(f'unzip train.zip -d {data_dir}')
