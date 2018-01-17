@@ -127,7 +127,7 @@ def predict(_):
     full_data['zero_count'] = (full_data == 0).astype(int).sum(axis=1)
     full_data['zero_count'] = (full_data == 0).astype(int).sum(axis=1)
 
-    train_mask = image_id % 10 != 0
+    train_mask = pd.factorize(image_id)[0] % 10 != 0
 
     X_train, y_train = full_data[train_mask], target[train_mask]
     X_test, y_test = full_data[~train_mask], target[~train_mask]
