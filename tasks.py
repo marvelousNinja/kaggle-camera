@@ -145,6 +145,7 @@ from camera.transforms import adjust_gamma
 from camera.transforms import flip_horizontally
 from camera.transforms import jpeg_compress
 from camera.transforms import resize
+from camera.transforms import crop_center
 
 def process_image(label, path, output_dir):
     size = 512
@@ -165,13 +166,9 @@ def process_image(label, path, output_dir):
     }
 
     for transform_name, transform in transforms.items():
-        transformed_image = transform(image)
         # TODO AS: Alternative cropping strategies
-        center_x = transformed_image.shape[0] // 2 - 1
-        center_y = transformed_image.shape[1] // 2 - 1
-        top_x, top_y = center_x - size // 2, center_y - size // 2
         patch_id = 0
-        patch = transformed_image[top_x:top_x + size, top_y:top_y + size]
+        patch = crop_center(transform(image), size)
         filename = f'{label}_{image_id}_{transform_name}_{patch_id}.png'
         cv2.imwrite(os.path.join(output_dir, filename), patch)
 
