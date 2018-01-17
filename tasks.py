@@ -110,8 +110,8 @@ def extract_inter_features(_):
 def predict(_):
     data_dir = os.environ['DATA_DIR']
 
-    intra_channel_features = pd.read_csv(data_dir + '/intra_channel_features/intra_channel_features.csv')
-    inter_channel_features = pd.read_csv(data_dir + '/inter_channel_features/inter_channel_features.csv')
+    intra_channel_features = pd.read_csv(data_dir + '/intra_channel_features/intra_channel_features.csv', header=None)
+    inter_channel_features = pd.read_csv(data_dir + '/inter_channel_features/inter_channel_features.csv', header=None)
 
     image_id_column = inter_channel_features.columns[-2]
     target_column = inter_channel_features.columns[-1]
