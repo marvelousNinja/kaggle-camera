@@ -125,7 +125,7 @@ def process_label_image_path_pair(label, image_path, crop_generator, crop_size, 
 
 def parallel_image_generator(pool, labels_and_image_paths, crop_generator=random_crop, crop_size=512, crop_limit=15):
     manager = Manager()
-    queue = manager.Queue(400)
+    queue = manager.Queue(1000)
 
     for label, image_path in labels_and_image_paths:
         pool.apply_async(process_label_image_path_pair, (label, image_path, crop_generator, crop_size, crop_limit, queue))
