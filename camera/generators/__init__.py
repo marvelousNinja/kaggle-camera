@@ -26,7 +26,7 @@ def list_all_samples_in(dir):
     labels_and_image_paths = []
 
     for label in list_dirs_in(dir):
-        image_paths = list_images_in(os.path.join(dir, label)
+        image_paths = list_images_in(os.path.join(dir, label))
         labels = [label] * len(image_paths)
         labels_and_image_paths.extend(zip(labels, image_paths))
 

@@ -14,6 +14,7 @@ from camera.generators import center_crop
 from camera.generators import sequential_crop
 from camera.generators import random_crop
 from camera.feature_extraction import intra_channel
+from camera.experiments.cnn_svm import conduct
 
 load_dotenv(find_dotenv())
 
@@ -48,7 +49,7 @@ def generate_test(_):
         test_data.append(features)
 
     full_test = np.array(test_data)
-    np.savetxt(os.path.join(data_dir, test.csv), full_test, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(data_dir, 'test.csv'), full_test, fmt='%s', delimiter=',')
 
 @task
 def experiment(_):
@@ -57,7 +58,7 @@ def experiment(_):
     train, _, _ = train_test_holdout_split(labels_and_image_paths)
     crop_size = 512
 
-    full_test = np.loadtxt(os.path.join(data_dir, test.csv', delimiter=',', dtype=np.object)
+    full_test = np.loadtxt(os.path.join(data_dir, 'test.csv'), delimiter=',', dtype=np.object)
     X_test, y_test = full_test[:, :-1], full_test[:, -1]
 
     i = 0
@@ -78,3 +79,8 @@ def experiment(_):
             model.fit(X_train, y_train)
             predictions = model.predict(X_test)
             tqdm.write(classification_report(y_test, predictions))
+
+@task
+def experiment_cnn(_):
+    data_dir = os.environ['DATA_DIR']
+    conduct(data_dir)

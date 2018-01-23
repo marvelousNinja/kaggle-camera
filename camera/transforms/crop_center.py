@@ -1,4 +1,4 @@
-def crop_center(image, size):
+def crop_center(size, image):
     center_x = image.shape[0] // 2 - 1
     center_y = image.shape[1] // 2 - 1
     top_x, top_y = center_x - size // 2, center_y - size // 2
