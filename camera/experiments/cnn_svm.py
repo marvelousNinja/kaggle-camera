@@ -213,7 +213,7 @@ def conduct(data_dir):
     cnn = build_cnn()
 
     n_epochs = 50
-    n_batches = 100
+    n_batches = 200
     for epoch in tqdm(range(n_epochs)):
         learning_rate = learning_schedule(epoch)
         K.set_value(cnn.optimizer.lr, learning_rate)
@@ -222,8 +222,6 @@ def conduct(data_dir):
             features, labels = next(train_generator)
             cnn.train_on_batch(features, labels)
 
-        metrics = cnn.test_on_batch(features, labels)
-        tqdm.write('Training ' + str(list(zip(cnn.metrics_names, metrics))))
-
-        metrics = cnn.test_on_batch(validation_data[0], validation_data[1])
-        tqdm.write('Validation ' + str(list(zip(cnn.metrics_names, metrics))))
+        train_metrics = cnn.test_on_batch(features, labels)
+        test_metrics = cnn.test_on_batch(validation_data[0], validation_data[1])
+        tqdm.write('Training ' + str(list(zip(cnn.metrics_names, train_metrics))) + ' Validation ' + str(list(zip(cnn.metrics_names, test_metrics))))
