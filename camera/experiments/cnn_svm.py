@@ -78,7 +78,7 @@ def center_crop(size, image):
     center_x = image.shape[0] // 2 - 1
     center_y = image.shape[1] // 2 - 1
     top_x, top_y = center_x - size // 2, center_y - size // 2
-    return image[top_x:top_x + size, top_y:top_y + size]
+    return [image[top_x:top_x + size, top_y:top_y + size]]
 
 def process_image(path, label, transform, crop, queue):
     try:
@@ -211,7 +211,7 @@ def conduct(data_dir):
 
     cnn.fit_generator(
         generator=train_generator,
-        steps_per_epoch=200,
+        steps_per_epoch=1,
         epochs=50,
         verbose=2,
         callbacks=[LearningRateScheduler(learning_schedule, verbose=2)],
