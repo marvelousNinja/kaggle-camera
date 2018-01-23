@@ -34,7 +34,7 @@ def download(ctx):
 @task
 def generate_test(_):
     data_dir = os.environ['DATA_DIR']
-    labels_and_image_paths = list_all_samples_in(data_dir)
+    labels_and_image_paths = list_all_samples_in(os.path.join(data_dir, 'train'))
     _, test, _ = train_test_holdout_split(labels_and_image_paths)
     crop_size = 512
 
@@ -48,16 +48,16 @@ def generate_test(_):
         test_data.append(features)
 
     full_test = np.array(test_data)
-    np.savetxt(data_dir + '/test.csv', full_test, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(data_dir, test.csv), full_test, fmt='%s', delimiter=',')
 
 @task
 def experiment(_):
     data_dir = os.environ['DATA_DIR']
-    labels_and_image_paths = list_all_samples_in(data_dir)
+    labels_and_image_paths = list_all_samples_in(os.path.join(data_dir, 'train'))
     train, _, _ = train_test_holdout_split(labels_and_image_paths)
     crop_size = 512
 
-    full_test = np.loadtxt(data_dir + '/test.csv', delimiter=',', dtype=np.object)
+    full_test = np.loadtxt(os.path.join(data_dir, test.csv', delimiter=',', dtype=np.object)
     X_test, y_test = full_test[:, :-1], full_test[:, -1]
 
     i = 0

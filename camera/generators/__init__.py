@@ -22,11 +22,11 @@ def intensity_texture_score(image):
     channel_std_score_aggr = channel_std_score.mean()
     return 0.7 * channel_mean_score_aggr + 0.3 * channel_std_score_aggr
 
-def list_all_samples_in(data_dir):
+def list_all_samples_in(dir):
     labels_and_image_paths = []
 
-    for label in list_dirs_in(data_dir + '/train'):
-        image_paths = list_images_in(data_dir + '/train/' + label)
+    for label in list_dirs_in(dir):
+        image_paths = list_images_in(os.path.join(dir, label)
         labels = [label] * len(image_paths)
         labels_and_image_paths.extend(zip(labels, image_paths))
 
