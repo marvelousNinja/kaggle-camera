@@ -100,7 +100,7 @@ def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11)
         try:
             pool = Pool(processes=2, initializer=np.random.seed)
             manager = Manager()
-            image_patch_queue = manager.Queue()
+            image_patch_queue = manager.Queue(200)
 
             pairs = np.array(image_paths_and_labels)
             np.random.shuffle(pairs)
