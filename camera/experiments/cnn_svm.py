@@ -1,15 +1,18 @@
 import os
 from multiprocessing import Pool, Manager
 from queue import Empty
+from functools import partial
+from itertools import islice
 import numpy as np
 import cv2
-from functools import partial
+from tqdm import tqdm
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Input, MaxPooling2D, Convolution2D
 from keras.optimizers import SGD
 from keras.callbacks import LearningRateScheduler
 from keras.regularizers import l2
 from keras.utils import to_categorical
+from keras import backend as K
 from camera.data import list_dirs_in
 from camera.data import list_images_in
 from camera.transforms import adjust_gamma
@@ -201,20 +204,26 @@ def conduct(data_dir):
         partial(sequential_crop, 64, 25)
     )))
 
-    validation_data = map(partial(process_batch, all_labels), in_batches(128, image_generator(
+    validation_data = list(islice(map(partial(process_batch, all_labels), in_batches(128, image_generator(
         test,
         partial(random_transform, transforms_and_weights),
         partial(center_crop, 64)
-    )))
+    ))), 1))[0]
 
     cnn = build_cnn()
 
-    cnn.fit_generator(
-        generator=train_generator,
-        steps_per_epoch=1,
-        epochs=50,
-        verbose=2,
-        callbacks=[LearningRateScheduler(learning_schedule, verbose=2)],
-        validation_data=validation_data,
-        validation_steps=1
-    )
+    n_epochs = 50
+    n_batches = 100
+    for epoch in tqdm(range(n_epochs)):
+        learning_rate = learning_schedule(epoch)
+        K.set_value(cnn.optimizer.lr, learning_rate)
+
+        for _ in tqdm(range(n_batches)):
+            features, labels = next(train_generator)
+            cnn.train_on_batch(features, labels)
+
+        metrics = cnn.test_on_batch(features, labels)
+        tqdm.write('Training ' + str(list(zip(cnn.metrics_names, metrics))))
+
+        metrics = cnn.test_on_batch(validation_data[0], validation_data[1])
+        tqdm.write('Validation ' + str(list(zip(cnn.metrics_names, metrics))))
