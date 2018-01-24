@@ -1,6 +1,5 @@
 import os
-from multiprocessing import Pool, Manager
-from queue import Empty
+from multiprocessing import Pool
 from functools import partial
 from itertools import islice
 import numpy as np
@@ -45,8 +44,8 @@ def random_transform(transforms_and_weights, image):
     transforms, weights = zip(*transforms_and_weights)
     weights = np.array(weights)
     probabilities = weights / sum(weights)
-    transfrom = np.random.choice(transforms, p=probabilities)
-    return transfrom(image)
+    transform = np.random.choice(transforms, p=probabilities)
+    return transform(image)
 
 def intensity_texture_score(image):
     image = image / 255
@@ -83,41 +82,38 @@ def center_crop(size, image):
     top_x, top_y = center_x - size // 2, center_y - size // 2
     return [image[top_x:top_x + size, top_y:top_y + size]]
 
-def process_image(path, label, transform, crop, queue):
-    try:
-        image = cv2.imread(path)
-        transformed_image = transform(image)
-        rgb_image = cv2.cvtColor(transformed_image, cv2.COLOR_BGR2RGB).astype(np.int64)
-        for patch in crop(rgb_image):
-            queue.put((True, (patch, label)))
-    except Exception as e:
-        queue.put((False, e))
+def process_image(path, label, transform, crop):
+    image = cv2.imread(path)
+    transformed_image = transform(image)
+    rgb_image = cv2.cvtColor(transformed_image, cv2.COLOR_BGR2RGB)
+    return list(crop(rgb_image)), label
+
+def process_image_star(args):
+    return process_image(*args)
 
 def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11):
     np.random.seed(seed)
 
+    pool = Pool(processes=None, initializer=np.random.seed)
+
     while True:
-        try:
-            pool = Pool(processes=2, initializer=np.random.seed)
-            manager = Manager()
-            image_patch_queue = manager.Queue(200)
+        pairs = np.array(image_paths_and_labels)
+        np.random.shuffle(pairs)
 
-            pairs = np.array(image_paths_and_labels)
-            np.random.shuffle(pairs)
+        paths, labels = zip(*image_paths_and_labels)
+        params = zip(
+            paths,
+            labels,
+            [transform] * len(paths),
+            [crop] * len(paths)
+        )
 
-            for image_path, label in pairs:
-                pool.apply_async(process_image, (image_path, label, transform, crop, image_patch_queue))
+        for patches, label in pool.imap(process_image_star, params):
+            for patch in patches:
+                yield patch, label
 
-            while True:
-                success, response = image_patch_queue.get()
-                if success:
-                    yield response
-                else:
-                    raise response
-
-        except Empty:
-            if not loop:
-                break
+        if not loop:
+            break
 
 def in_batches(batch_size, iterable):
     feature_batch = list()
@@ -131,6 +127,8 @@ def in_batches(batch_size, iterable):
             yield (np.array(feature_batch), np.array(label_batch))
             feature_batch = list()
             label_batch = list()
+
+    yield (np.array(feature_batch), np.array(label_batch))
 
 def learning_schedule(epoch):
     return 0.015 / (1 + epoch // 10)
@@ -174,11 +172,8 @@ def process_batch(all_labels, batch):
     features = batch[0]
     labels = batch[1]
 
-    features -= [123, 117, 104]
-    features = features * 0.0125
-
+    features = (features.astype(np.float) - [123, 117, 104]) * 0.0125
     labels = encode_labels(all_labels, labels)
-
     return (features, labels)
 
 def conduct(data_dir):
@@ -198,22 +193,23 @@ def conduct(data_dir):
         (partial(resize, 2.0), 1)
     )
 
-    train_generator = map(partial(process_batch, all_labels), in_batches(128, image_generator(
-        train,
-        partial(random_transform, transforms_and_weights),
-        partial(sequential_crop, 64, 25)
-    )))
-
-    validation_data = list(islice(map(partial(process_batch, all_labels), in_batches(128, image_generator(
+    validation_data = list(map(partial(process_batch, all_labels), in_batches(None, tqdm(image_generator(
         test,
         partial(random_transform, transforms_and_weights),
-        partial(center_crop, 64)
-    ))), 1))[0]
+        partial(center_crop, 64),
+        loop=False
+    )))))[0]
 
     cnn = build_cnn()
 
+    train_generator = map(partial(process_batch, all_labels), in_batches(128, image_generator(
+        train,
+        partial(random_transform, transforms_and_weights),
+        partial(sequential_crop, 64, 15)
+    )))
+
     n_epochs = 50
-    n_batches = 200
+    n_batches = 10
     for epoch in tqdm(range(n_epochs)):
         learning_rate = learning_schedule(epoch)
         K.set_value(cnn.optimizer.lr, learning_rate)
