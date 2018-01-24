@@ -89,7 +89,7 @@ def conduct(data_dir):
     )))
 
     n_epochs = 50
-    n_batches = 10
+    n_batches = 230
     for epoch in tqdm(range(n_epochs)):
         learning_rate = learning_schedule(epoch)
         K.set_value(cnn.optimizer.lr, learning_rate)
