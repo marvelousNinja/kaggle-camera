@@ -12,123 +12,14 @@ from keras.callbacks import LearningRateScheduler
 from keras.regularizers import l2
 from keras.utils import to_categorical
 from keras import backend as K
-from camera.data import list_dirs_in
-from camera.data import list_images_in
-from camera.transforms import adjust_gamma
-from camera.transforms import flip_horizontally
-from camera.transforms import jpeg_compress
-from camera.transforms import resize
+from camera.data import list_dirs_in, list_all_samples_in, train_test_holdout_split
+from camera.transforms import default_transforms_and_weights
+from camera.transforms import random_transform
+from camera.transforms import sequential_crop
+from camera.transforms import center_crop
+from camera.generators import image_generator
+from camera.generators import in_batches
 from camera.transforms import identity
-
-def list_all_samples_in(dir):
-    image_paths_and_labels = []
-
-    for label in list_dirs_in(dir):
-        image_paths = list_images_in(os.path.join(dir, label))
-        labels = [label] * len(image_paths)
-        image_paths_and_labels.extend(zip(image_paths, labels))
-
-    return image_paths_and_labels
-
-def train_test_holdout_split(samples, seed=11):
-    np.random.seed(seed)
-    shuffled_samples = np.array(samples)
-    np.random.shuffle(shuffled_samples)
-    sample_count = len(samples)
-    train = shuffled_samples[0:int(sample_count * 0.7)]
-    test = shuffled_samples[int(sample_count * 0.7):int(sample_count * 0.85)]
-    holdout = shuffled_samples[int(sample_count * 0.85):]
-    return train, test, holdout
-
-def random_transform(transforms_and_weights, image):
-    transforms, weights = zip(*transforms_and_weights)
-    weights = np.array(weights)
-    probabilities = weights / sum(weights)
-    transform = np.random.choice(transforms, p=probabilities)
-    return transform(image)
-
-def intensity_texture_score(image):
-    image = image / 255
-    flat_image = image.reshape(-1, 3)
-    channel_mean = flat_image.mean(axis=0)
-    channel_std = flat_image.std(axis=0)
-
-    channel_mean_score = -4 * channel_mean ** 2 + 4 * channel_mean
-    channel_std_score = 1 - np.exp(-2 * np.log(10) * channel_std)
-
-    channel_mean_score_aggr = channel_mean_score.mean()
-    channel_std_score_aggr = channel_std_score.mean()
-    return 0.7 * channel_mean_score_aggr + 0.3 * channel_std_score_aggr
-
-def sequential_crop(crop_size, limit, image):
-    threshold = 0.5
-    patches = []
-    for i in range(image.shape[0] // crop_size):
-        for j in range(image.shape[1] // crop_size):
-            patches.append(image[i * crop_size:(i + 1) * crop_size, j * crop_size:(j + 1) * crop_size])
-
-    patch_scores = []
-    for patch in patches:
-        patch_scores.append(intensity_texture_score(patch))
-
-    scored_score_indicies = np.argsort(patch_scores)[::-1]
-    sorted_scores = np.array(patch_scores)[scored_score_indicies]
-    sorted_patches = np.array(patches)[scored_score_indicies]
-    return sorted_patches[sorted_scores >= threshold][:limit]
-
-def center_crop(size, image):
-    center_x = image.shape[0] // 2 - 1
-    center_y = image.shape[1] // 2 - 1
-    top_x, top_y = center_x - size // 2, center_y - size // 2
-    return [image[top_x:top_x + size, top_y:top_y + size]]
-
-def process_image(path, label, transform, crop):
-    image = cv2.imread(path)
-    transformed_image = transform(image)
-    rgb_image = cv2.cvtColor(transformed_image, cv2.COLOR_BGR2RGB)
-    return list(crop(rgb_image)), label
-
-def process_image_star(args):
-    return process_image(*args)
-
-def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11):
-    np.random.seed(seed)
-
-    pool = Pool(processes=None, initializer=np.random.seed)
-
-    while True:
-        pairs = np.array(image_paths_and_labels)
-        np.random.shuffle(pairs)
-
-        paths, labels = zip(*image_paths_and_labels)
-        params = zip(
-            paths,
-            labels,
-            [transform] * len(paths),
-            [crop] * len(paths)
-        )
-
-        for patches, label in pool.imap(process_image_star, params):
-            for patch in patches:
-                yield patch, label
-
-        if not loop:
-            break
-
-def in_batches(batch_size, iterable):
-    feature_batch = list()
-    label_batch = list()
-
-    for features, label in iterable:
-        feature_batch.append(features)
-        label_batch.append(label)
-
-        if len(feature_batch) == batch_size:
-            yield (np.array(feature_batch), np.array(label_batch))
-            feature_batch = list()
-            label_batch = list()
-
-    yield (np.array(feature_batch), np.array(label_batch))
 
 def learning_schedule(epoch):
     return 0.015 / (1 + epoch // 10)
@@ -157,7 +48,6 @@ def build_cnn():
 
     return cnn
 
-
 def encode_labels(all_labels, labels):
     mapped_labels = np.array(labels)
 
@@ -181,17 +71,7 @@ def conduct(data_dir):
     all_labels = list_dirs_in(os.path.join(data_dir, 'train'))
     train, test, _ = train_test_holdout_split(all_samples)
 
-    transforms_and_weights = (
-        (identity, 8),
-        (partial(adjust_gamma, 0.8), 1),
-        (partial(adjust_gamma, 1.2), 1),
-        (partial(jpeg_compress, 70), 1),
-        (partial(jpeg_compress, 90), 1),
-        (partial(resize, 0.5), 1),
-        (partial(resize, 0.8), 1),
-        (partial(resize, 1.5), 1),
-        (partial(resize, 2.0), 1)
-    )
+    transforms_and_weights = default_transforms_and_weights()
 
     validation_data = list(map(partial(process_batch, all_labels), in_batches(None, tqdm(image_generator(
         test,
