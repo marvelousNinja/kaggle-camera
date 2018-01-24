@@ -5,6 +5,7 @@ import numpy as np
 from dotenv import load_dotenv, find_dotenv
 from camera.experiments.cnn_svm import conduct
 from camera.experiments.residual import conduct as conduct_residual
+from camera.experiments.demosaicing import conduct as conduct_demosaicing
 
 load_dotenv(find_dotenv())
 
@@ -31,3 +32,8 @@ def experiment_cnn(_):
 def experiment_residual(_):
     data_dir = os.environ['DATA_DIR']
     conduct_residual(data_dir)
+
+@task
+def experiment_demosaicing(_):
+    data_dir = os.environ['DATA_DIR']
+    conduct_demosaicing(data_dir)
