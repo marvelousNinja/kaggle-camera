@@ -70,4 +70,3 @@ def conduct(data_dir):
             model.fit(X, y)
             predictions = model.predict(X_test)
             tqdm.write(classification_report(y_test, predictions))
-
