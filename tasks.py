@@ -4,6 +4,7 @@ from tqdm import tqdm
 import numpy as np
 from dotenv import load_dotenv, find_dotenv
 from camera.experiments.cnn_svm import conduct
+from camera.experiments.residual import conduct as conduct_residual
 
 load_dotenv(find_dotenv())
 
@@ -25,3 +26,8 @@ def download(ctx):
 def experiment_cnn(_):
     data_dir = os.environ['DATA_DIR']
     conduct(data_dir)
+
+@task
+def experiment_residual(_):
+    data_dir = os.environ['DATA_DIR']
+    conduct_residual(data_dir)
