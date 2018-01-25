@@ -7,15 +7,13 @@ def process_image(path, label, transform, crop):
     image = cv2.imread(path)
     transformed_image = transform(image)
     rgb_image = cv2.cvtColor(transformed_image, cv2.COLOR_BGR2RGB)
-    return list(crop(rgb_image)), label
+    return crop(rgb_image), label
 
 def process_image_star(args):
     return process_image(*args)
 
-def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11):
+def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11, pool=Pool(processes=None, initializer=np.random.seed)):
     np.random.seed(seed)
-
-    pool = Pool(processes=None, initializer=np.random.seed)
 
     while True:
         pairs = np.array(image_paths_and_labels)
