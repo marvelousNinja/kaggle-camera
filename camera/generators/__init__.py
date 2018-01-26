@@ -1,18 +1,18 @@
 import os
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import numpy as np
-import cv2
+import jpeg4py as jpeg
 
 def process_image(path, label, transform, crop):
-    image = cv2.imread(path)
+    # TODO AS: Use cv2 for PNG
+    image = jpeg.JPEG(str(path)).decode()
     transformed_image = transform(image)
-    rgb_image = cv2.cvtColor(transformed_image, cv2.COLOR_BGR2RGB)
-    return crop(rgb_image), label
+    return crop(transformed_image), label
 
 def process_image_star(args):
     return process_image(*args)
 
-def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11, pool=Pool(processes=None, initializer=np.random.seed)):
+def image_generator(image_paths_and_labels, transform, crop, loop=True, seed=11, pool=Pool(processes=cpu_count() - 2, initializer=np.random.seed)):
     np.random.seed(seed)
 
     while True:
