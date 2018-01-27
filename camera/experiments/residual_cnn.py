@@ -75,6 +75,11 @@ def to_grayscale(image):
 def reshape(image):
     return image.reshape(image.shape[0], image.shape[1], 1)
 
+def crop_random(size, image):
+    top_x = np.random.randint(image.shape[0] - size)
+    top_y = np.random.randint(image.shape[1] - size)
+    return image[top_x:top_x + size, top_y:top_y + size]
+
 def conduct(data_dir):
     all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
     all_labels = list_dirs_in(os.path.join(data_dir, 'train'))
@@ -90,9 +95,18 @@ def conduct(data_dir):
         [-1, +2, -2, +2, -1]
     ]) / 12
 
-    pipeline = partial(pipe, [
+    train_pipeline = partial(pipe, [
         read_jpeg,
         partial(crop_center, 512),
+        partial(random_transform, default_transforms_and_weights()),
+        partial(apply_filter, image_filter),
+        partial(crop_random, crop_size)
+    ])
+
+    test_pipeline = partial(pipe, [
+        read_jpeg,
+        partial(crop_center, 512),
+        partial(random_transform, default_transforms_and_weights()),
         partial(apply_filter, image_filter),
         partial(crop_center, crop_size)
     ])
@@ -106,7 +120,7 @@ def conduct(data_dir):
     to_batch = partial(in_batches, batch_size)
 
     paths, labels = zip(*test)
-    x_test = np.stack(list(tqdm(pool.imap(pipeline, paths))))
+    x_test = np.stack(list(tqdm(pool.imap(test_pipeline, paths))))
     y_test = np.stack(label_encoder(labels))
 
     model = DenseNet(
@@ -132,7 +146,7 @@ def conduct(data_dir):
         paths, labels = zip(*train)
         labels = label_encoder(labels)
 
-        for x_train, y_train in tqdm(zip(to_batch(pool.imap(pipeline, paths)), to_batch(labels)), total=n_batches):
+        for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
             model.train_on_batch(x_train, y_train)
 
         train_metrics = model.test_on_batch(x_train, y_train)
