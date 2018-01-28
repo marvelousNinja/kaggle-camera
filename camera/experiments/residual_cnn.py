@@ -97,7 +97,7 @@ def conduct(data_dir):
 
     train_pipeline = partial(pipe, [
         read_jpeg,
-        partial(crop_center, 512),
+        partial(crop_center, crop_size * 2 + 8),
         partial(random_transform, default_transforms_and_weights()),
         partial(apply_filter, image_filter),
         partial(crop_random, crop_size)
@@ -105,7 +105,7 @@ def conduct(data_dir):
 
     test_pipeline = partial(pipe, [
         read_jpeg,
-        partial(crop_center, 512),
+        partial(crop_center, crop_size * 2 + 8),
         partial(random_transform, default_transforms_and_weights()),
         partial(apply_filter, image_filter),
         partial(crop_center, crop_size)
@@ -115,7 +115,7 @@ def conduct(data_dir):
 
     n_epochs = 50
     batch_size = 64
-    n_batches = len(train) // batch_size
+    n_batches = int(np.ceil(len(train) / batch_size))
     label_encoder = partial(encode_labels, all_labels)
     to_batch = partial(in_batches, batch_size)
 
@@ -129,7 +129,7 @@ def conduct(data_dir):
         growth_rate=12,
         nb_filter=16,
         dropout_rate=0.0,
-        input_shape=(32, 32, 3),
+        input_shape=(crop_size, crop_size, 3),
         pooling='avg',
         include_top=True,
         weights=None
