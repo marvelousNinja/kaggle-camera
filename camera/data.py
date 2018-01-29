@@ -1,6 +1,10 @@
 import os
 import glob
 import numpy as np
+import jpeg4py as jpeg
+
+def read_jpeg(path):
+    return jpeg.JPEG(str(path)).decode()
 
 def list_images_in(path):
     extensions = ['jpg', 'JPG', 'tiff', 'png']

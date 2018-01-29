@@ -3,9 +3,6 @@ from invoke import task
 from tqdm import tqdm
 import numpy as np
 from dotenv import load_dotenv, find_dotenv
-from camera.experiments.cnn_svm import conduct
-from camera.experiments.residual import conduct as conduct_residual
-from camera.experiments.demosaicing import conduct as conduct_demosaicing
 from camera.experiments.residual_cnn import conduct as conduct_residual_cnn
 
 load_dotenv(find_dotenv())
@@ -25,21 +22,26 @@ def download(ctx):
         ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
 
 @task
-def experiment_cnn(_):
+def experiment_residual_cnn(
+        ctx,
+        crop_size=32,
+        n_epochs=100,
+        batch_size=16,
+        outer_crop_strategy='crop_center',
+        inner_crop_strategy='crop_random',
+        residual_filter_strategy='spam_11_5',
+        test_limit=None,
+        train_limit=None,
+    ):
     data_dir = os.environ['DATA_DIR']
-    conduct(data_dir)
-
-@task
-def experiment_residual(_):
-    data_dir = os.environ['DATA_DIR']
-    conduct_residual(data_dir)
-
-@task
-def experiment_demosaicing(_):
-    data_dir = os.environ['DATA_DIR']
-    conduct_demosaicing(data_dir)
-
-@task
-def experiment_residual_cnn(_):
-    data_dir = os.environ['DATA_DIR']
-    conduct_residual_cnn(data_dir)
+    conduct_residual_cnn(
+        data_dir,
+        crop_size,
+        n_epochs,
+        batch_size,
+        outer_crop_strategy,
+        inner_crop_strategy,
+        residual_filter_strategy
+        test_limit,
+        train_limit
+    )

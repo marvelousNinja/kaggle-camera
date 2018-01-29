@@ -3,119 +3,74 @@ from multiprocessing import Pool, cpu_count
 from functools import partial
 import itertools
 
-import jpeg4py as jpeg
 from tqdm import tqdm
 import numpy as np
-import cv2
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Input, MaxPooling2D, Convolution2D, GlobalAveragePooling2D
-from keras.optimizers import SGD, Adam
-from keras.callbacks import LearningRateScheduler
-from keras.regularizers import l2
-from keras.utils import to_categorical
-from keras_contrib.applications import DenseNet
-from keras import backend as K
-
+from camera.networks import densenet_40
+from camera.utils import pipe, encode_labels, in_batches
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
-from camera.transforms import default_transforms_and_weights
-from camera.transforms import random_transform
+from camera.data import read_jpeg
+from camera.transforms import (
+    default_transforms_and_weights, random_transform,
+    crop_center, crop_random,
+    spam_11_3, spam_11_5, spam_14_edge,
+    identity
+)
 
-def read_jpeg(path):
-    return jpeg.JPEG(str(path)).decode()
+def conduct(
+        data_dir,
+        crop_size,
+        n_epochs,
+        batch_size,
+        outer_crop_strategy,
+        inner_crop_strategy,
+        residual_filter_strategy,
+        test_limit,
+        train_limit
+    ):
 
-def crop_center(size, image):
-    top_x = image.shape[0] // 2 - size // 2
-    top_y = image.shape[1] // 2 - size // 2
-    return image[top_x:top_x + size, top_y:top_y + size]
+    outer_crop_size = crop_size * 2 + 8
+    input_shape = (crop_size, crop_size, 3)
 
-def pipe(funcs, target):
-    result = target
-    for func in funcs:
-        result = func(result)
-    return result
-
-def apply_filter(image_filter, image):
-    return cv2.filter2D(image.astype(np.float), -1, image_filter)
-
-def in_batches(batch_size, iterable):
-    batch = list()
-    for element in iterable:
-        batch.append(element)
-        if len(batch) == batch_size:
-            yield np.stack(batch)
-            batch = list()
-    if len(batch) > 0:
-        yield np.stack(batch)
-
-def encode_labels(all_labels, labels):
-    mapped_labels = np.array(labels)
-    for code, label in enumerate(all_labels):
-        mapped_labels[mapped_labels == label] = code
-    return to_categorical(mapped_labels, num_classes=len(all_labels))
-
-def learning_schedule(epoch):
-    return 0.015 / (2 ** (epoch // 10))
-
-def drop_n_and_freeze(n, model):
-    for _ in range(n):
-        model.layers.pop()
-
-    model.layers[-1].outbound_nodes = []
-    model.outputs = [model.layers[-1].output]
-
-    for layer in model.layers:
-        layer.trainable = False
-
-    return model
-
-def to_grayscale(image):
-    return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY).reshape(image.shape[0], image.shape[1], 1)
-
-def reshape(image):
-    return image.reshape(image.shape[0], image.shape[1], 1)
-
-def crop_random(size, image):
-    top_x = np.random.randint(image.shape[0] - size)
-    top_y = np.random.randint(image.shape[1] - size)
-    return image[top_x:top_x + size, top_y:top_y + size]
-
-def conduct(data_dir):
     all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
     all_labels = list_dirs_in(os.path.join(data_dir, 'train'))
     train, test, _ = train_test_holdout_split(all_samples)
+    test = test[:test_limit]
+    train = train[:train_limit]
 
-    crop_size = 32
+    n_batches = int(np.ceil(len(train) / batch_size))
 
-    image_filter = np.array([
-        [-1, +2, -2, +2, -1],
-        [+2, -6, +8, -6, +2],
-        [-2, +8, -12, +8, -2],
-        [+2, -6, +8, -6, +2],
-        [-1, +2, -2, +2, -1]
-    ]) / 12
+    crop_strategies = {
+        None: identity,
+        'crop_center': crop_center,
+        'crop_random': crop_random
+    }
+
+    filter_strategies = {
+        None: identity,
+        'spam_11_3': spam_11_3,
+        'spam_11_5': spam_11_5,
+        'spam_14_edge': spam_14_edge
+    }
 
     train_pipeline = partial(pipe, [
         read_jpeg,
-        partial(crop_center, crop_size * 2 + 8),
+        partial(crop_strategies[outer_crop_strategy], outer_crop_size),
         partial(random_transform, default_transforms_and_weights()),
-        partial(apply_filter, image_filter),
-        partial(crop_random, crop_size)
+        filter_strategies[residual_filter_strategy],
+        partial(crop_strategies[inner_crop_strategy], crop_size)
     ])
 
     test_pipeline = partial(pipe, [
         read_jpeg,
-        partial(crop_center, crop_size * 2 + 8),
+        partial(crop_center, outer_crop_size),
         partial(random_transform, default_transforms_and_weights()),
-        partial(apply_filter, image_filter),
+        filter_strategies[residual_filter_strategy],
         partial(crop_center, crop_size)
     ])
 
     pool = Pool(processes=cpu_count() - 2, initializer=np.random.seed)
 
-    n_epochs = 50
-    batch_size = 64
-    n_batches = int(np.ceil(len(train) / batch_size))
     label_encoder = partial(encode_labels, all_labels)
     to_batch = partial(in_batches, batch_size)
 
@@ -123,23 +78,7 @@ def conduct(data_dir):
     x_test = np.stack(list(tqdm(pool.imap(test_pipeline, paths))))
     y_test = np.stack(label_encoder(labels))
 
-    model = DenseNet(
-        depth=40,
-        nb_dense_block=3,
-        growth_rate=12,
-        nb_filter=16,
-        dropout_rate=0.0,
-        input_shape=(crop_size, crop_size, 3),
-        pooling='avg',
-        include_top=True,
-        weights=None
-    )
-
-    model.compile(
-        optimizer=Adam(lr=0.0001),
-        loss='categorical_crossentropy',
-        metrics=['acc']
-    )
+    model = densenet_40()
 
     for epoch in tqdm(range(n_epochs)):
         np.random.shuffle(train)
