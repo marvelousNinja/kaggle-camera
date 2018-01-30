@@ -115,7 +115,9 @@ def conduct(
         learning_rate_schedule(learning_rate, epoch, model)
 
         for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
+            tqdm.write('got batch')
             model.train_on_batch(x_train, y_train)
+            tqdm.write('trained on batch')
 
         if epoch == 14:
             optimizer = SGD(get_learning_rate(model), momentum=0.9, nesterov=True)
