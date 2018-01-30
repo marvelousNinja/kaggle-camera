@@ -119,7 +119,7 @@ def conduct(
 
         if epoch == 14:
             optimizer = SGD(get_learning_rate(model), momentum=0.9, nesterov=True)
-            model: model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
+            model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
 
         # TODO AS: Check that it doesn't affect the optimizer
         # unfreeze_layers(unfreeze_per_epoch, model)
