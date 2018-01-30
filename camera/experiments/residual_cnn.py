@@ -37,18 +37,6 @@ def conduct(
         network
     ):
 
-    outer_crop_size = crop_size * 2 + 8
-
-    all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
-    all_labels = list_dirs_in(os.path.join(data_dir, 'train'))
-    train, test, _ = train_test_holdout_split(all_samples)
-
-    if overfit_run:
-        train = train[:batch_size]
-        test = test[:batch_size]
-
-    n_batches = int(np.ceil(len(train) / batch_size))
-
     crop_strategies = {
         'none': identity,
         'crop_center': crop_center,
@@ -66,6 +54,25 @@ def conduct(
         'none': identity,
         'random': partial(random_transform, default_transforms_and_weights())
     }
+
+    networks = {
+        'densenet_40': densenet_40,
+        'densenet_121': densenet_121,
+        'densenet_169': densenet_169,
+        'densenet_201': densenet_201
+    }
+
+    outer_crop_size = crop_size * 2 + 8
+
+    all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
+    all_labels = list_dirs_in(os.path.join(data_dir, 'train'))
+    train, test, _ = train_test_holdout_split(all_samples)
+
+    if overfit_run:
+        train = train[:batch_size]
+        test = test[:batch_size]
+
+    n_batches = int(np.ceil(len(train) / batch_size))
 
     train_pipeline = partial(pipe, [
         read_jpeg,
@@ -91,13 +98,6 @@ def conduct(
     paths, labels = zip(*test)
     x_test = np.stack(list(tqdm(pool.imap(test_pipeline, paths))))
     y_test = np.stack(label_encoder(labels))
-
-    networks = {
-        'densenet_40': densenet_40,
-        'densenet_121': densenet_121,
-        'densenet_169': densenet_169,
-        'densenet_201': densenet_201
-    }
 
     input_shape = (crop_size, crop_size, 3)
     num_classes = len(all_labels)

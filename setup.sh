@@ -3,7 +3,7 @@ set -e
 set -v
 
 # Add NVIDIA repo
-curl -o http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+curl -O http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
 dpkg -i ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
 rm ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
 
@@ -14,7 +14,7 @@ sudo apt-get update && sudo apt-get install -y cuda-8.0 unzip make build-essenti
              xz-utils tk-dev libturbojpeg
 
 # Instal CuDNN
-curl -o http://developer.download.nvidia.com/compute/redist/cudnn/v6.0/cudnn-8.0-linux-x64-v6.0.tgz
+curl -O http://developer.download.nvidia.com/compute/redist/cudnn/v6.0/cudnn-8.0-linux-x64-v6.0.tgz
 tar -xvf ./cudnn-8.0-linux-x64-v6.0.tgz -C ./
 sudo cp -P ./cuda/lib64/* /usr/local/cuda/lib64
 sudo cp ./cuda/include/* /usr/local/cuda/include
