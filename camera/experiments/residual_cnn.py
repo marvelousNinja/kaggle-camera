@@ -50,20 +50,20 @@ def conduct(
     n_batches = int(np.ceil(len(train) / batch_size))
 
     crop_strategies = {
-        None: identity,
+        'none': identity,
         'crop_center': crop_center,
         'crop_random': crop_random
     }
 
     filter_strategies = {
-        None: identity,
+        'none': identity,
         'spam_11_3': spam_11_3,
         'spam_11_5': spam_11_5,
         'spam_14_edge': spam_14_edge
     }
 
     transform_strategies = {
-        None: identity,
+        'none': identity,
         'random': partial(random_transform, default_transforms_and_weights())
     }
 
@@ -116,7 +116,6 @@ def conduct(
 
         for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
             model.train_on_batch(x_train, y_train)
-
 
         if epoch == 14:
             optimizer = SGD(get_learning_rate(model), momentum=0.9, nesterov=True)
