@@ -21,27 +21,29 @@ def download(ctx):
         ctx.run(f'unzip sample_submission.csv.zip -d {data_dir}')
         ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
 
-@task
+@task()
 def experiment_residual_cnn(
         ctx,
+        learning_rate=0.0001,
         crop_size=32,
         n_epochs=100,
         batch_size=16,
         outer_crop_strategy='crop_center',
         inner_crop_strategy='crop_random',
         residual_filter_strategy='spam_11_5',
-        test_limit=None,
-        train_limit=None,
+        overfit_run=False,
+        network='densenet_169'
     ):
     data_dir = os.environ['DATA_DIR']
     conduct_residual_cnn(
         data_dir,
+        learning_rate,
         crop_size,
         n_epochs,
         batch_size,
         outer_crop_strategy,
         inner_crop_strategy,
-        residual_filter_strategy
-        test_limit,
-        train_limit
+        residual_filter_strategy,
+        overfit_run,
+        network
     )

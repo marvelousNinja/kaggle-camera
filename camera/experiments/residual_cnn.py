@@ -5,11 +5,12 @@ import itertools
 
 from tqdm import tqdm
 import numpy as np
+from keras.optimizers import Adam
 
-from camera.networks import densenet_40
 from camera.utils import pipe, encode_labels, in_batches
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
 from camera.data import read_jpeg
+
 from camera.transforms import (
     default_transforms_and_weights, random_transform,
     crop_center, crop_random,
@@ -17,26 +18,33 @@ from camera.transforms import (
     identity
 )
 
+from camera.networks import (
+    densenet_40, densenet_121, densenet_169, densenet_201,
+    unfreeze_layers
+)
+
 def conduct(
         data_dir,
+        learning_rate,
         crop_size,
         n_epochs,
         batch_size,
         outer_crop_strategy,
         inner_crop_strategy,
         residual_filter_strategy,
-        test_limit,
-        train_limit
+        overfit_run,
+        network
     ):
 
     outer_crop_size = crop_size * 2 + 8
-    input_shape = (crop_size, crop_size, 3)
 
     all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
     all_labels = list_dirs_in(os.path.join(data_dir, 'train'))
     train, test, _ = train_test_holdout_split(all_samples)
-    test = test[:test_limit]
-    train = train[:train_limit]
+
+    if overfit_run:
+        train = train[:batch_size]
+        test = train[:batch_size]
 
     n_batches = int(np.ceil(len(train) / batch_size))
 
@@ -78,7 +86,21 @@ def conduct(
     x_test = np.stack(list(tqdm(pool.imap(test_pipeline, paths))))
     y_test = np.stack(label_encoder(labels))
 
-    model = densenet_40()
+    networks = {
+        'densenet_40': densenet_40,
+        'densenet_121': densenet_121,
+        'densenet_169': densenet_169,
+        'densenet_201': densenet_201
+    }
+
+    input_shape = (crop_size, crop_size, 3)
+    num_classes = len(all_labels)
+    model = networks[network](input_shape, num_classes)
+    optimizer = Adam(learning_rate)
+    recompile = lambda model: model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
+    recompile(model)
+
+    print(model.summary())
 
     for epoch in tqdm(range(n_epochs)):
         np.random.shuffle(train)
@@ -87,6 +109,10 @@ def conduct(
 
         for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
             model.train_on_batch(x_train, y_train)
+
+        # TODO AS: Check that it doesn't affect the optimizer
+        # unfreeze_layers(unfreeze_per_epoch, model)
+        # recompile(model)
 
         train_metrics = model.test_on_batch(x_train, y_train)
         test_metrics = model.test_on_batch(x_test, y_test)
