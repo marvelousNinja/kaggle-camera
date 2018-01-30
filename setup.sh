@@ -4,7 +4,7 @@ set -v
 
 # Add NVIDIA repo
 curl -O http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-dpkg -i ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+sudo dpkg -i ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
 rm ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
 
 # Install CUDA and system deps for Python
