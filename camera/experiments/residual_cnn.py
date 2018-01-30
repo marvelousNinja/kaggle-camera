@@ -20,7 +20,7 @@ from camera.transforms import (
 
 from camera.networks import (
     densenet_40, densenet_121, densenet_169, densenet_201,
-    unfreeze_layers
+    unfreeze_layers, learning_rate_schedule, get_learning_rate
 )
 
 def conduct(
@@ -31,6 +31,7 @@ def conduct(
         batch_size,
         outer_crop_strategy,
         inner_crop_strategy,
+        transform_strategy,
         residual_filter_strategy,
         overfit_run,
         network
@@ -61,10 +62,15 @@ def conduct(
         'spam_14_edge': spam_14_edge
     }
 
+    transform_strategies = {
+        None: identity,
+        'random': partial(random_transform, default_transforms_and_weights())
+    }
+
     train_pipeline = partial(pipe, [
         read_jpeg,
         partial(crop_strategies[outer_crop_strategy], outer_crop_size),
-        partial(random_transform, default_transforms_and_weights()),
+        transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
         partial(crop_strategies[inner_crop_strategy], crop_size)
     ])
@@ -72,7 +78,7 @@ def conduct(
     test_pipeline = partial(pipe, [
         read_jpeg,
         partial(crop_center, outer_crop_size),
-        partial(random_transform, default_transforms_and_weights()),
+        transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
         partial(crop_center, crop_size)
     ])
@@ -106,12 +112,14 @@ def conduct(
         paths, labels = zip(*train)
         labels = label_encoder(labels)
 
+        learning_rate_schedule(learning_rate, epoch, model)
+
         for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
             model.train_on_batch(x_train, y_train)
 
 
         if epoch == 14:
-            optimizer = SGD(learning_rate, momentum=0.9, nesterov=True)
+            optimizer = SGD(get_learning_rate(model), momentum=0.9, nesterov=True)
             model: model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
 
         # TODO AS: Check that it doesn't affect the optimizer

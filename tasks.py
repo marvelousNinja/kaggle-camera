@@ -30,6 +30,7 @@ def experiment_residual_cnn(
         batch_size=16,
         outer_crop_strategy='crop_center',
         inner_crop_strategy='crop_random',
+        transform_strategy='random',
         residual_filter_strategy='spam_11_5',
         overfit_run=False,
         network='densenet_40'
@@ -43,6 +44,7 @@ def experiment_residual_cnn(
         batch_size,
         outer_crop_strategy,
         inner_crop_strategy,
+        transform_strategy,
         residual_filter_strategy,
         overfit_run,
         network

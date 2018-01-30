@@ -1,3 +1,4 @@
+import keras.backend as K
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, GlobalAveragePooling2D
 from keras_contrib.applications import (
@@ -146,3 +147,10 @@ def densenet_201(input_shape, num_classes):
         GlobalAveragePooling2D(),
         Dense(num_classes, activation='softmax')
     ])
+
+def learning_rate_schedule(initial_rate, epoch, model):
+    lr = initial_rate / (2 ** (epoch // 10))
+    K.set_value(model.optimizer.lr, lr)
+
+def get_learning_rate(model):
+    return K.get_value(model.optimizer.lr)
