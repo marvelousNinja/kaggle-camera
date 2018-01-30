@@ -5,7 +5,7 @@ import itertools
 
 from tqdm import tqdm
 import numpy as np
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 
 from camera.utils import pipe, encode_labels, in_batches
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
@@ -44,7 +44,7 @@ def conduct(
 
     if overfit_run:
         train = train[:batch_size]
-        test = train[:batch_size]
+        test = test[:batch_size]
 
     n_batches = int(np.ceil(len(train) / batch_size))
 
@@ -97,8 +97,7 @@ def conduct(
     num_classes = len(all_labels)
     model = networks[network](input_shape, num_classes)
     optimizer = Adam(learning_rate)
-    recompile = lambda model: model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
-    recompile(model)
+    model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
 
     print(model.summary())
 
@@ -109,6 +108,11 @@ def conduct(
 
         for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
             model.train_on_batch(x_train, y_train)
+
+
+        if epoch == 14:
+            optimizer = SGD(learning_rate, momentum=0.9, nesterov=True)
+            model: model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
 
         # TODO AS: Check that it doesn't affect the optimizer
         # unfreeze_layers(unfreeze_per_epoch, model)
