@@ -114,7 +114,7 @@ def conduct(
 
         learning_rate_schedule(learning_rate, epoch, model)
 
-        for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths, chunksize=batch_size * 2)), to_batch(labels)), total=n_batches):
+        for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
             model.train_on_batch(x_train, y_train)
 
         if epoch == 14:
