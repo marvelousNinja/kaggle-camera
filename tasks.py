@@ -26,13 +26,13 @@ def experiment_residual_cnn(
         ctx,
         learning_rate=0.0001,
         crop_size=32,
-        n_epochs=100,
+        n_epochs=200,
         batch_size=16,
         outer_crop_strategy='crop_center',
         inner_crop_strategy='crop_random',
         residual_filter_strategy='spam_11_5',
         overfit_run=False,
-        network='densenet_169'
+        network='densenet_40'
     ):
     data_dir = os.environ['DATA_DIR']
     conduct_residual_cnn(

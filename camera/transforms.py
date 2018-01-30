@@ -19,15 +19,15 @@ def adjust_gamma(gamma, image):
 
 def default_transforms_and_weights():
     return (
-        (identity, 8),
-        (partial(adjust_gamma, 0.8), 1),
-        (partial(adjust_gamma, 1.2), 1),
-        (partial(jpeg_compress, 70), 1),
-        (partial(jpeg_compress, 90), 1),
-        (partial(resize, 0.5), 1),
-        (partial(resize, 0.8), 1),
-        (partial(resize, 1.5), 1),
-        (partial(resize, 2.0), 1)
+        (identity, 70),
+        (partial(adjust_gamma, 0.8), 3.75),
+        (partial(adjust_gamma, 1.2), 3.75),
+        (partial(jpeg_compress, 70), 3.75),
+        (partial(jpeg_compress, 90), 3.75),
+        (partial(resize, 0.5), 3.75),
+        (partial(resize, 0.8), 3.75),
+        (partial(resize, 1.5), 3.75),
+        (partial(resize, 2.0), 3.75)
     )
 
 def random_transform(transforms_and_weights, image):
