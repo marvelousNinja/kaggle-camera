@@ -149,7 +149,7 @@ def densenet_201(input_shape, num_classes):
     ])
 
 def learning_rate_schedule(initial_rate, epoch, model):
-    lr = initial_rate / (2 ** (epoch // 10))
+    lr = initial_rate / (10 ** (epoch // 10))
     K.set_value(model.optimizer.lr, lr)
 
 def get_learning_rate(model):
