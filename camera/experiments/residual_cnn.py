@@ -23,6 +23,15 @@ from camera.networks import (
     unfreeze_layers, learning_rate_schedule, get_learning_rate
 )
 
+def read_jpeg_cached(cache, preserve_width, path):
+    image = cache.get(path)
+    if image:
+        return image
+    else:
+        image = read_jpeg(path)
+        cache[path] = np.array(crop_center(preserve_width, image))
+        return image
+
 def conduct(
         data_dir,
         learning_rate,
@@ -74,8 +83,9 @@ def conduct(
 
     n_batches = int(np.ceil(len(train) / batch_size))
 
+    cache = dict()
     train_pipeline = partial(pipe, [
-        read_jpeg,
+        partial(read_jpeg_cached, cache, outer_crop_size),
         partial(crop_strategies[outer_crop_strategy], outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
@@ -83,7 +93,7 @@ def conduct(
     ])
 
     test_pipeline = partial(pipe, [
-        read_jpeg,
+        partial(read_jpeg_cached, cache, outer_crop_size),
         partial(crop_center, outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
