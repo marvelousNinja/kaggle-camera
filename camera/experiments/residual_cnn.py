@@ -25,7 +25,7 @@ from camera.networks import (
 
 def read_jpeg_cached(cache, preserve_width, path):
     image = cache.get(path)
-    if image:
+    if image is not None:
         return image
     else:
         image = read_jpeg(path)
