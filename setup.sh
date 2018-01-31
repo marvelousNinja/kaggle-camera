@@ -3,19 +3,19 @@ set -e
 set -v
 
 # Add NVIDIA repo
-curl -O http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-sudo dpkg -i ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-rm ./cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+curl -O https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
+sudo dpkg -i ./cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
+rm ./cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
 
 # Install CUDA and system deps for Python
-sudo apt-get update && sudo apt-get install -y cuda-8.0 unzip make build-essential \
+sudo apt-get update && sudo apt-get install -y cuda-9.1 unzip make build-essential \
              libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
              libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
              xz-utils tk-dev libturbojpeg
 
 # Instal CuDNN
-curl -O http://developer.download.nvidia.com/compute/redist/cudnn/v6.0/cudnn-8.0-linux-x64-v6.0.tgz
-tar -xvf ./cudnn-8.0-linux-x64-v6.0.tgz -C ./
+curl -O http://developer.download.nvidia.com/compute/redist/cudnn/v7.0.5/cudnn-9.0-linux-x64-v7.tgz
+tar -xvf ./cudnn-9.0-linux-x64-v7.tgz -C ./
 sudo cp -P ./cuda/lib64/* /usr/local/cuda/lib64
 sudo cp ./cuda/include/* /usr/local/cuda/include
 rm -rf ./cuda
@@ -43,4 +43,4 @@ pip3 install -r requirements.txt
 
 # Replace TF with GPU version
 pip3 uninstall -y tensorflow
-pip3 --no-cache-dir install https://github.com/mind/wheels/releases/download/tf1.4.1-gpu/tensorflow-1.4.1-cp36-cp36m-linux_x86_64.whl
+pip3 --no-cache-dir install https://github.com/mind/wheels/releases/download/tf1.5-gpu-cuda91-nomkl/tensorflow-1.5.0-cp36-cp36m-linux_x86_64.whl
