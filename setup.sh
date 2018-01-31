@@ -19,6 +19,7 @@ tar -xvf ./cudnn-9.0-linux-x64-v7.tgz -C ./
 sudo cp -P ./cuda/lib64/* /usr/local/cuda/lib64
 sudo cp ./cuda/include/* /usr/local/cuda/include
 rm -rf ./cuda
+rm cudnn-9.0-linux-x64-v7.tgz
 
 # Set persistence mode
 sudo nvidia-smi -pm 1
