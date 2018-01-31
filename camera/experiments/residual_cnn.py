@@ -127,7 +127,7 @@ def conduct(
         labels = label_encoder(labels)
         return zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels))
 
-    reduce_lr = ReduceLROnPlateau(patience=5, verbose=1)
+    reduce_lr = ReduceLROnPlateau(patience=10, verbose=1, min_lr=0.5e-6, factor=np.sqrt(0.1))
 
     model.fit_generator(
         generator=infinite_generator(train_generator_initializer),
