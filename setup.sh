@@ -8,7 +8,7 @@ sudo dpkg -i ./cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
 rm ./cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
 
 # Install CUDA and system deps for Python
-sudo apt-get update && sudo apt-get install -y cuda-9.1 unzip make build-essential \
+sudo apt-get update && sudo apt-get install -y --allow-unauthenticated cuda-9.1 unzip make build-essential \
              libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
              libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
              xz-utils tk-dev libturbojpeg
@@ -21,7 +21,7 @@ sudo cp ./cuda/include/* /usr/local/cuda/include
 rm -rf ./cuda
 
 # Set persistence mode
-nvidia-smi -pm 1
+sudo nvidia-smi -pm 1
 
 # Install pyenv
 curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
