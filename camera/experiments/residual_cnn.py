@@ -1,5 +1,5 @@
 import os
-from multiprocessing import Pool, cpu_count
+from multiprocessing.pool import ThreadPool
 from functools import partial
 import itertools
 
@@ -90,7 +90,7 @@ def conduct(
         partial(crop_center, crop_size)
     ])
 
-    pool = Pool(processes=cpu_count() - 2, initializer=np.random.seed)
+    pool = ThreadPool(initializer=np.random.seed)
 
     label_encoder = partial(encode_labels, all_labels)
     to_batch = partial(in_batches, batch_size)

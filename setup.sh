@@ -11,7 +11,7 @@ rm ./cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
 sudo apt-get update && sudo apt-get install -y --allow-unauthenticated cuda-9.1 unzip make build-essential \
              libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
              libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
-             xz-utils tk-dev libturbojpeg
+             xz-utils tk-dev libturbojpeg && sudo apt-get clean
 
 # Instal CuDNN
 curl -O http://developer.download.nvidia.com/compute/redist/cudnn/v7.0.5/cudnn-9.0-linux-x64-v7.tgz
@@ -20,9 +20,6 @@ sudo cp -P ./cuda/lib64/* /usr/local/cuda/lib64
 sudo cp ./cuda/include/* /usr/local/cuda/include
 rm -rf ./cuda
 rm cudnn-9.0-linux-x64-v7.tgz
-
-# Set persistence mode
-sudo nvidia-smi -pm 1
 
 # Install pyenv
 curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
