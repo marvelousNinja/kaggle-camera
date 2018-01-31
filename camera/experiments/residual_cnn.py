@@ -5,7 +5,8 @@ import itertools
 
 from tqdm import tqdm
 import numpy as np
-from keras.optimizers import Adam, SGD
+from keras.optimizers import Adam
+from keras.callbacks import ReduceLROnPlateau
 
 from camera.utils import pipe, encode_labels, in_batches
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
@@ -18,10 +19,7 @@ from camera.transforms import (
     identity
 )
 
-from camera.networks import (
-    densenet_40, densenet_121, densenet_169, densenet_201,
-    unfreeze_layers, learning_rate_schedule, get_learning_rate
-)
+from camera.networks import densenet_40, densenet_121, densenet_169, densenet_201
 
 def read_jpeg_cached(cache, crop_size, path):
     image = cache.get(path)
@@ -31,6 +29,12 @@ def read_jpeg_cached(cache, crop_size, path):
         image = np.array(crop_center(crop_size, read_jpeg(path)))
         cache[path] = image
         return image
+
+def infinite_generator(initializer):
+    while True:
+        generator = initializer()
+        for element in generator:
+            yield element
 
 def conduct(
         data_dir,
@@ -117,26 +121,20 @@ def conduct(
 
     print(model.summary())
 
-    for epoch in tqdm(range(n_epochs)):
+    def train_generator_initializer():
         np.random.shuffle(train)
         paths, labels = zip(*train)
         labels = label_encoder(labels)
+        return zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels))
 
-        learning_rate_schedule(learning_rate, epoch, model)
+    reduce_lr = ReduceLROnPlateau(patience=5, verbose=1)
 
-        for x_train, y_train in tqdm(zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels)), total=n_batches):
-            tqdm.write('got batch')
-            model.train_on_batch(x_train, y_train)
-            tqdm.write('trained on batch')
-
-        if epoch == 14:
-            optimizer = SGD(get_learning_rate(model), momentum=0.9, nesterov=True)
-            model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
-
-        # TODO AS: Check that it doesn't affect the optimizer
-        # unfreeze_layers(unfreeze_per_epoch, model)
-        # recompile(model)
-
-        train_metrics = model.test_on_batch(x_train, y_train)
-        test_metrics = model.test_on_batch(x_test, y_test)
-        tqdm.write('Training ' + str(list(zip(model.metrics_names, train_metrics))) + ' Validation ' + str(list(zip(model.metrics_names, test_metrics))))
+    model.fit_generator(
+        generator=infinite_generator(train_generator_initializer),
+        steps_per_epoch=n_batches,
+        epochs=n_epochs,
+        verbose=2,
+        callbacks=[reduce_lr],
+        validation_data=(x_test, y_test),
+        initial_epoch=0
+    )
