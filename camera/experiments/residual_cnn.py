@@ -23,13 +23,13 @@ from camera.networks import (
     unfreeze_layers, learning_rate_schedule, get_learning_rate
 )
 
-def read_jpeg_cached(cache, preserve_width, path):
+def read_jpeg_cached(cache, crop_size, path):
     image = cache.get(path)
     if image is not None:
         return image
     else:
-        image = read_jpeg(path)
-        cache[path] = np.array(crop_center(preserve_width, image))
+        image = np.array(crop_center(crop_size, read_jpeg(path)))
+        cache[path] = image
         return image
 
 def conduct(
