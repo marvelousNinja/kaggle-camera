@@ -40,12 +40,12 @@ def random_transform(transforms_and_weights, image):
 def crop_random(size, image):
     top_x = np.random.randint(image.shape[0] - size)
     top_y = np.random.randint(image.shape[1] - size)
-    return image[top_x:top_x + size, top_y:top_y + size]
+    return np.array(image[top_x:top_x + size, top_y:top_y + size])
 
 def crop_center(size, image):
     top_x = image.shape[0] // 2 - size // 2
     top_y = image.shape[1] // 2 - size // 2
-    return image[top_x:top_x + size, top_y:top_y + size]
+    return np.array(image[top_x:top_x + size, top_y:top_y + size])
 
 def apply_filter(image_filter, image):
     return cv2.filter2D(image.astype(np.float32), -1, image_filter)

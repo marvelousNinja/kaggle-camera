@@ -5,12 +5,13 @@ import itertools
 
 from tqdm import tqdm
 import numpy as np
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from keras.callbacks import ReduceLROnPlateau
 
 from camera.utils import pipe, encode_labels, in_batches
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
 from camera.data import read_jpeg
+from camera.callbacks import SGDWarmRestart, UnfreezeAfterEpoch
 
 from camera.transforms import (
     default_transforms_and_weights, random_transform,
@@ -39,9 +40,9 @@ def read_jpeg_cached(hashtable, cache, crop_size, path):
     if index is not None:
         return cache[index]
     else:
-        image = np.array(crop_center(crop_size, read_jpeg(path)))
+        image = crop_center(crop_size, read_jpeg(path))
         cache[len(hashtable)] = image
-        hashtable[path] = len(cache)
+        hashtable[path] = len(hashtable)
         return image
 
 def infinite_generator(initializer):
@@ -56,8 +57,7 @@ def conduct(
         crop_size,
         n_epochs,
         batch_size,
-        outer_crop_strategy,
-        inner_crop_strategy,
+        crop_strategy,
         transform_strategy,
         residual_filter_strategy,
         overfit_run,
@@ -111,16 +111,16 @@ def conduct(
 
     hashtable = dict()
     cache = np.zeros((len(train), outer_crop_size, outer_crop_size, 3), dtype=np.uint8)
+    print(cache.shape)
     train_pipeline = partial(pipe, [
         partial(read_jpeg_cached, hashtable, cache, outer_crop_size),
-        partial(crop_strategies[outer_crop_strategy], outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
-        partial(crop_strategies[inner_crop_strategy], crop_size)
+        partial(crop_strategies[crop_strategy], crop_size)
     ])
 
     test_pipeline = partial(pipe, [
-        partial(read_jpeg_cached, hashtable, cache, outer_crop_size),
+        read_jpeg,
         partial(crop_center, outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
@@ -139,7 +139,7 @@ def conduct(
     input_shape = (crop_size, crop_size, 3)
     num_classes = len(all_labels)
     model = networks[network](input_shape, num_classes)
-    optimizer = Adam(learning_rate)
+    optimizer = SGD(learning_rate, momentum=0.9, nesterov=True)
     model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
 
     print(model.summary())
@@ -150,14 +150,17 @@ def conduct(
         labels = label_encoder(labels)
         return zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels))
 
-    reduce_lr = ReduceLROnPlateau(patience=10, verbose=1, min_lr=0.5e-6, factor=np.sqrt(0.1))
+    # TODO AS: Incompatible with warm SGD?
+    # reduce_lr = ReduceLROnPlateau(patience=10, verbose=1, min_lr=0.5e-6, factor=np.sqrt(0.1))
+    warm_restart_sgd = SGDWarmRestart(n_batches)
+    unfreeze = UnfreezeAfterEpoch(0)
 
     model.fit_generator(
         generator=infinite_generator(train_generator_initializer),
         steps_per_epoch=n_batches,
         epochs=n_epochs,
         verbose=2,
-        callbacks=[reduce_lr],
+        callbacks=[warm_restart_sgd, unfreeze],
         validation_data=(x_test, y_test),
         initial_epoch=0
     )

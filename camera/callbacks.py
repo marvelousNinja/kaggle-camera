@@ -26,10 +26,10 @@ class SGDWarmRestart(Callback):
     def on_train_begin(self, logs={}):
         self.progress = 0
 
-    def on_batch_end(self, batch, logs={}):
-        self.progress += 1 / self.steps_per_epoch
-        if self.progress > self.period_in_epochs:
-            self.progress = 1 / self.steps_per_epoch
-            self.period_in_epochs = self.period_growth_rate * self.period_in_epochs
+    def on_batch_begin(self, batch, logs={}):
         new_lr = self.min_lr + 0.5 * (self.max_lr - self.min_lr) * (1 + np.cos(np.pi * self.progress / self.period_in_epochs))
         K.set_value(self.model.optimizer.lr, new_lr)
+        self.progress += 1 / self.steps_per_epoch
+        if self.progress >= self.period_in_epochs:
+            self.progress = 0
+            self.period_in_epochs = self.period_growth_rate * self.period_in_epochs
