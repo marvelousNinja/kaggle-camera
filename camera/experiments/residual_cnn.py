@@ -16,7 +16,8 @@ from camera.transforms import (
     default_transforms_and_weights, random_transform,
     crop_center, crop_random,
     spam_11_3, spam_11_5, spam_14_edge,
-    identity
+    identity,
+    subtract_mean
 )
 
 from camera.networks import (
@@ -71,6 +72,7 @@ def conduct(
 
     filter_strategies = {
         'none': identity,
+        'subtract_mean': subtract_mean,
         'spam_11_3': spam_11_3,
         'spam_11_5': spam_11_5,
         'spam_14_edge': spam_14_edge

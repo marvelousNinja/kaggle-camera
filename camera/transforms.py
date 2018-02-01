@@ -48,7 +48,7 @@ def crop_center(size, image):
     return image[top_x:top_x + size, top_y:top_y + size]
 
 def apply_filter(image_filter, image):
-    return cv2.filter2D(image.astype(np.float), -1, image_filter)
+    return cv2.filter2D(image.astype(np.float32), -1, image_filter)
 
 def spam_11_5(image):
     image_filter = np.array([
@@ -78,3 +78,6 @@ def spam_14_edge(image):
     ]) / 4
 
     return apply_filter(image_filter, image)
+
+def subtract_mean(image):
+    return image.astype(np.float32) - [122.7717, 115.9465, 102.9801]
