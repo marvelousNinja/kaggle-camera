@@ -31,15 +31,9 @@ def freeze_all_layers(model):
 
     return model
 
-def unfreeze_layers(n, model):
-    unfrozen = 0
-    for layer in model.layers[::-1]:
-        if not layer.trainable:
-            layer.trainable = True
-            unfrozen += 1
-
-            if unfrozen == n:
-                break
+def unfreeze_all_layers(model):
+    for layer in model.layers:
+        layer.trainable = True
 
     return model
 
