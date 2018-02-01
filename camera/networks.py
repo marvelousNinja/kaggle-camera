@@ -28,12 +28,16 @@ def drop_layers(n, model):
 def freeze_all_layers(model):
     for layer in model.layers:
         layer.trainable = False
+        if hasattr(layer, 'layers'):
+            freeze_all_layers(layer)
 
     return model
 
 def unfreeze_all_layers(model):
     for layer in model.layers:
         layer.trainable = True
+        if hasattr(layer, 'layers'):
+            unfreeze_all_layers(layer)
 
     return model
 
