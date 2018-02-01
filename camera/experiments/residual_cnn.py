@@ -35,14 +35,13 @@ from camera.networks import (
     xception
 )
 
-def read_jpeg_cached(hashtable, cache, crop_size, path):
-    index = hashtable.get(path)
-    if index is not None:
-        return cache[index]
+def read_jpeg_cached(cache, crop_size, path):
+    image = cache.get(path)
+    if image is not None:
+        return image
     else:
         image = crop_center(crop_size, read_jpeg(path))
-        cache[len(hashtable)] = image
-        hashtable[path] = len(hashtable)
+        cache[path] = image
         return image
 
 def infinite_generator(initializer):
@@ -54,6 +53,8 @@ def infinite_generator(initializer):
 def conduct(
         data_dir,
         learning_rate,
+        optimizer,
+        callbacks,
         crop_size,
         n_epochs,
         batch_size,
@@ -84,17 +85,22 @@ def conduct(
     }
 
     networks = {
-        'densenet_40': densenet_40,
-        'densenet_121': densenet_121,
-        'densenet_169': densenet_169,
-        'densenet_201': densenet_201,
-        'residual_of_residual': residual_of_residual,
-        'wide_residual_network': wide_residual_network,
-        'mobile_net': mobile_net,
-        'inception_resnet_v2': inception_resnet_v2,
-        'inception_v3': inception_v3,
-        'resnet_50': resnet_50,
-        'xception': xception
+        'densenet_40': densenet_40, # slow, overifts
+        'densenet_121': densenet_121, # loss seems to high
+        'densenet_169': densenet_169, # loss seems to high
+        'densenet_201': densenet_201, # loss seems to high
+        'residual_of_residual': residual_of_residual,  # doesn't work
+        'wide_residual_network': wide_residual_network, # doesn't work
+        'mobile_net': mobile_net, # kinda like it, overfitted almost perfectly, seems fast, VALIDATION LOSS DIDN'T fall soo much
+        'inception_resnet_v2': inception_resnet_v2, # kinda like it, did not overfit via 200 epochs
+        'inception_v3': inception_v3, # kinda like it, overfitted almost perfectly, seems fast
+        'resnet_50': resnet_50, # kinda like it, did overfit after 200 epochs
+        'xception': xception # kinda slower, did not overfit via 200 epochs
+    }
+
+    optimizers = {
+        'adam': Adam(learning_rate),
+        'sgd': SGD(learning_rate, momentum=0.9, nesterov=True)
     }
 
     outer_crop_size = crop_size * 2 + 8
@@ -109,11 +115,15 @@ def conduct(
 
     n_batches = int(np.ceil(len(train) / batch_size))
 
-    hashtable = dict()
-    cache = np.zeros((len(train), outer_crop_size, outer_crop_size, 3), dtype=np.uint8)
-    print(cache.shape)
+    available_callbacks = {
+        'sgdr': SGDWarmRestart(max_lr=learning_rate, steps_per_epoch=n_batches),
+        'unfreeze': UnfreezeAfterEpoch(0),
+        'reduce_lr': ReduceLROnPlateau(patience=10, verbose=1, min_lr=0.5e-6, factor=np.sqrt(0.1))
+    }
+
+    cache = dict()
     train_pipeline = partial(pipe, [
-        partial(read_jpeg_cached, hashtable, cache, outer_crop_size),
+        partial(read_jpeg_cached, cache, outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
         partial(crop_strategies[crop_strategy], crop_size)
@@ -139,8 +149,7 @@ def conduct(
     input_shape = (crop_size, crop_size, 3)
     num_classes = len(all_labels)
     model = networks[network](input_shape, num_classes)
-    optimizer = SGD(learning_rate, momentum=0.9, nesterov=True)
-    model.compile(optimizer, loss='sparse_categorical_crossentropy', metrics=['acc'])
+    model.compile(optimizers[optimizer], loss='sparse_categorical_crossentropy', metrics=['acc'])
 
     print(model.summary())
 
@@ -150,17 +159,12 @@ def conduct(
         labels = label_encoder(labels)
         return zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels))
 
-    # TODO AS: Incompatible with warm SGD?
-    # reduce_lr = ReduceLROnPlateau(patience=10, verbose=1, min_lr=0.5e-6, factor=np.sqrt(0.1))
-    warm_restart_sgd = SGDWarmRestart(n_batches)
-    unfreeze = UnfreezeAfterEpoch(0)
-
     model.fit_generator(
         generator=infinite_generator(train_generator_initializer),
         steps_per_epoch=n_batches,
         epochs=n_epochs,
         verbose=2,
-        callbacks=[warm_restart_sgd, unfreeze],
+        callbacks=[available_callbacks[name] for name in callbacks],
         validation_data=(x_test, y_test),
         initial_epoch=0
     )

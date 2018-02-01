@@ -25,6 +25,8 @@ def download(ctx):
 def experiment_residual_cnn(
         ctx,
         learning_rate=0.0001,
+        optimizer='adam',
+        callbacks='reduce_lr',
         crop_size=32,
         n_epochs=200,
         batch_size=16,
@@ -38,6 +40,8 @@ def experiment_residual_cnn(
     conduct_residual_cnn(
         data_dir,
         learning_rate,
+        optimizer,
+        callbacks.split(','),
         crop_size,
         n_epochs,
         batch_size,
