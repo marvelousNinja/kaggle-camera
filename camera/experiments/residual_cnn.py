@@ -19,15 +19,28 @@ from camera.transforms import (
     identity
 )
 
-from camera.networks import densenet_40, densenet_121, densenet_169, densenet_201
+from camera.networks import (
+    densenet_40,
+    densenet_121,
+    densenet_169,
+    densenet_201,
+    residual_of_residual,
+    wide_residual_network,
+    mobile_net,
+    inception_resnet_v2,
+    inception_v3,
+    resnet_50,
+    xception
+)
 
-def read_jpeg_cached(cache, crop_size, path):
-    image = cache.get(path)
-    if image is not None:
-        return image
+def read_jpeg_cached(hashtable, cache, crop_size, path):
+    index = hashtable.get(path)
+    if index is not None:
+        return cache[index]
     else:
         image = np.array(crop_center(crop_size, read_jpeg(path)))
-        cache[path] = image
+        cache[len(hashtable)] = image
+        hashtable[path] = len(cache)
         return image
 
 def infinite_generator(initializer):
@@ -72,7 +85,14 @@ def conduct(
         'densenet_40': densenet_40,
         'densenet_121': densenet_121,
         'densenet_169': densenet_169,
-        'densenet_201': densenet_201
+        'densenet_201': densenet_201,
+        'residual_of_residual': residual_of_residual,
+        'wide_residual_network': wide_residual_network,
+        'mobile_net': mobile_net,
+        'inception_resnet_v2': inception_resnet_v2,
+        'inception_v3': inception_v3,
+        'resnet_50': resnet_50,
+        'xception': xception
     }
 
     outer_crop_size = crop_size * 2 + 8
@@ -87,9 +107,10 @@ def conduct(
 
     n_batches = int(np.ceil(len(train) / batch_size))
 
-    cache = dict()
+    hashtable = dict()
+    cache = np.zeros((len(train), outer_crop_size, outer_crop_size, 3), dtype=np.uint8)
     train_pipeline = partial(pipe, [
-        partial(read_jpeg_cached, cache, outer_crop_size),
+        partial(read_jpeg_cached, hashtable, cache, outer_crop_size),
         partial(crop_strategies[outer_crop_strategy], outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
@@ -97,7 +118,7 @@ def conduct(
     ])
 
     test_pipeline = partial(pipe, [
-        partial(read_jpeg_cached, cache, outer_crop_size),
+        partial(read_jpeg_cached, hashtable, cache, outer_crop_size),
         partial(crop_center, outer_crop_size),
         transform_strategies[transform_strategy],
         filter_strategies[residual_filter_strategy],
