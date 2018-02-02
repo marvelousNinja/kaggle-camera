@@ -11,7 +11,7 @@ from keras.callbacks import ReduceLROnPlateau
 from camera.utils import pipe, encode_labels, in_batches
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
 from camera.data import read_jpeg
-from camera.callbacks import SGDWarmRestart, UnfreezeAfterEpoch
+from camera.callbacks import SGDWarmRestart, UnfreezeAfterEpoch, SwitchOptimizer
 
 from camera.transforms import (
     default_transforms_and_weights, random_transform,
@@ -22,12 +22,9 @@ from camera.transforms import (
 )
 
 from camera.networks import (
-    densenet_40,
     densenet_121,
     densenet_169,
     densenet_201,
-    residual_of_residual,
-    wide_residual_network,
     mobile_net,
     inception_resnet_v2,
     inception_v3,
@@ -62,7 +59,8 @@ def conduct(
         transform_strategy,
         residual_filter_strategy,
         overfit_run,
-        network
+        network,
+        verbose
     ):
 
     crop_strategies = {
@@ -85,12 +83,9 @@ def conduct(
     }
 
     networks = {
-        'densenet_40': densenet_40, # slow, overifts
         'densenet_121': densenet_121, # loss seems to high
         'densenet_169': densenet_169, # loss seems to high
         'densenet_201': densenet_201, # loss seems to high
-        'residual_of_residual': residual_of_residual,  # doesn't work
-        'wide_residual_network': wide_residual_network, # doesn't work
         'mobile_net': mobile_net, # kinda like it, overfitted almost perfectly, seems fast, VALIDATION LOSS DIDN'T fall soo much
         'inception_resnet_v2': inception_resnet_v2, # kinda like it, did not overfit via 200 epochs
         'inception_v3': inception_v3, # kinda like it, overfitted almost perfectly, seems fast
@@ -116,9 +111,10 @@ def conduct(
     n_batches = int(np.ceil(len(train) / batch_size))
 
     available_callbacks = {
-        'sgdr': SGDWarmRestart(max_lr=learning_rate, steps_per_epoch=n_batches),
-        'unfreeze': UnfreezeAfterEpoch(0),
-        'reduce_lr': ReduceLROnPlateau(patience=10, verbose=1, min_lr=0.5e-6, factor=np.sqrt(0.1))
+        'sgdr': SGDWarmRestart(max_lr=learning_rate, steps_per_epoch=n_batches, verbose=verbose),
+        'unfreeze': UnfreezeAfterEpoch(5, verbose=verbose),
+        'reduce_lr': ReduceLROnPlateau(patience=10, min_lr=0.5e-6, factor=np.sqrt(0.1), verbose=verbose),
+        'switch': SwitchOptimizer(10, optimizers['sgd'], verbose=verbose)
     }
 
     cache = dict()

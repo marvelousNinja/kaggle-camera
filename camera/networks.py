@@ -1,7 +1,5 @@
-import keras.backend as K
-from keras.models import Sequential
-from keras.layers import Dense, Flatten, GlobalAveragePooling2D
-from keras_contrib.applications import ResidualOfResidual, WideResidualNetwork, DenseNet
+from keras.models import Model
+from keras.layers import Dense, GlobalAveragePooling2D
 
 from keras.applications import (
     DenseNet121,
@@ -13,8 +11,6 @@ from keras.applications import (
     ResNet50,
     Xception
 )
-
-from keras import backend as K
 
 def drop_layers(n, model):
     for _ in range(n):
@@ -41,81 +37,60 @@ def unfreeze_all_layers(model):
 
     return model
 
-def densenet_40(input_shape, num_classes):
-    return Sequential([
-        DenseNet(
-            depth=40, nb_dense_block=3, growth_rate=12, nb_filter=16, dropout_rate=0.0,
-            input_shape=input_shape, include_top=False, weights=None),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
-
 def densenet_121(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(DenseNet121(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(DenseNet121(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
 
 def densenet_169(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(DenseNet169(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(DenseNet169(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
 
 def densenet_201(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(DenseNet169(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
-
-def residual_of_residual(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(ResidualOfResidual(include_top=False, input_shape=input_shape)),
-        Flatten(),
-        Dense(num_classes, activation='softmax')
-    ])
-
-def wide_residual_network(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(WideResidualNetwork(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(DenseNet201(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
 
 def mobile_net(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(MobileNet(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(MobileNet(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
 
 def inception_resnet_v2(input_shape, num_classes):
-     return Sequential([
-        freeze_all_layers(InceptionResNetV2(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(InceptionResNetV2(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
+
 
 def inception_v3(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(InceptionV3(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(InceptionV3(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
+
 
 def resnet_50(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(ResNet50(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(ResNet50(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
 
 def xception(input_shape, num_classes):
-    return Sequential([
-        freeze_all_layers(Xception(include_top=False, input_shape=input_shape)),
-        GlobalAveragePooling2D(),
-        Dense(num_classes, activation='softmax')
-    ])
+    model = freeze_all_layers(Xception(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)

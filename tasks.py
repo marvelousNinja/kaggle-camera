@@ -34,7 +34,8 @@ def experiment_residual_cnn(
         transform_strategy='random',
         residual_filter_strategy='spam_11_5',
         overfit_run=False,
-        network='densenet_40'
+        network='mobile_net',
+        verbose=0
     ):
     data_dir = os.environ['DATA_DIR']
     conduct_residual_cnn(
@@ -49,5 +50,6 @@ def experiment_residual_cnn(
         transform_strategy,
         residual_filter_strategy,
         overfit_run,
-        network
+        network,
+        verbose
     )
