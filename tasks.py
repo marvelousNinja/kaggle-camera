@@ -27,7 +27,7 @@ def experiment_residual_cnn(
         learning_rate=0.0001,
         optimizer='adam',
         callbacks='reduce_lr',
-        crop_size=32,
+        crop_size=224,
         n_epochs=200,
         batch_size=16,
         crop_strategy='crop_random',
@@ -35,6 +35,7 @@ def experiment_residual_cnn(
         residual_filter_strategy='spam_11_5',
         overfit_run=False,
         network='mobile_net',
+        sample_weights='equal',
         verbose=0
     ):
     data_dir = os.environ['DATA_DIR']
@@ -51,5 +52,6 @@ def experiment_residual_cnn(
         residual_filter_strategy,
         overfit_run,
         network,
+        sample_weights,
         verbose
     )

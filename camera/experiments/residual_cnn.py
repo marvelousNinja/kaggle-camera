@@ -59,6 +59,7 @@ def conduct(
         residual_filter_strategy,
         overfit_run,
         network,
+        sample_weights,
         verbose
     ):
 
@@ -112,9 +113,14 @@ def conduct(
 
     available_callbacks = {
         'sgdr': SGDWarmRestart(max_lr=learning_rate, steps_per_epoch=n_batches, verbose=verbose),
-        'unfreeze': UnfreezeAfterEpoch(5, verbose=verbose),
+        'unfreeze': UnfreezeAfterEpoch(0, verbose=verbose),
         'reduce_lr': ReduceLROnPlateau(patience=10, min_lr=0.5e-6, factor=np.sqrt(0.1), verbose=verbose),
         'switch': SwitchOptimizer(10, optimizers['sgd'], verbose=verbose)
+    }
+
+    weighters = {
+        'equal': lambda _: 1,
+        'transform': transform_to_sample_weight
     }
 
     cache = dict()
@@ -125,7 +131,7 @@ def conduct(
             filter_strategies[residual_filter_strategy],
             partial(crop_strategies[crop_strategy], crop_size)
         ])),
-        partial(evolve_at, 1, transform_to_sample_weight)
+        partial(evolve_at, 1, weighters[sample_weights])
     ])
 
     test_pipeline = partial(pipe, [
@@ -136,7 +142,7 @@ def conduct(
             filter_strategies[residual_filter_strategy],
             partial(crop_strategies[crop_strategy], crop_size)
         ])),
-        partial(evolve_at, 1, transform_to_sample_weight)
+        partial(evolve_at, 1, weighters[sample_weights])
     ])
 
     pool = ThreadPool(initializer=np.random.seed)
@@ -159,8 +165,7 @@ def conduct(
     model.compile(
         optimizers[optimizer],
         loss='sparse_categorical_crossentropy',
-        metrics=['acc'],
-        weighted_metrics=['acc']
+        metrics=['acc']
     )
 
     print(model.summary())
