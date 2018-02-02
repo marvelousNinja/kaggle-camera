@@ -1,14 +1,13 @@
 import os
 from multiprocessing.pool import ThreadPool
 from functools import partial
-import itertools
 
 from tqdm import tqdm
 import numpy as np
 from keras.optimizers import Adam, SGD
 from keras.callbacks import ReduceLROnPlateau
 
-from camera.utils import pipe, encode_labels, in_batches
+from camera.utils import pipe, encode_labels, in_batches, evolve_at, transform_to_sample_weight
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
 from camera.data import read_jpeg
 from camera.callbacks import SGDWarmRestart, UnfreezeAfterEpoch, SwitchOptimizer
@@ -77,8 +76,9 @@ def conduct(
         'spam_14_edge': spam_14_edge
     }
 
+    # TODO AS: Identity doesn't return transform name!!!
     transform_strategies = {
-        'none': identity,
+        'none': lambda image: [image, 'identity'],
         'random': partial(random_transform, default_transforms_and_weights())
     }
 
@@ -121,16 +121,22 @@ def conduct(
     train_pipeline = partial(pipe, [
         partial(read_jpeg_cached, cache, outer_crop_size),
         transform_strategies[transform_strategy],
-        filter_strategies[residual_filter_strategy],
-        partial(crop_strategies[crop_strategy], crop_size)
+        partial(evolve_at, 0, partial(pipe, [
+            filter_strategies[residual_filter_strategy],
+            partial(crop_strategies[crop_strategy], crop_size)
+        ])),
+        partial(evolve_at, 1, transform_to_sample_weight)
     ])
 
     test_pipeline = partial(pipe, [
         read_jpeg,
         partial(crop_center, outer_crop_size),
         transform_strategies[transform_strategy],
-        filter_strategies[residual_filter_strategy],
-        partial(crop_center, crop_size)
+        partial(evolve_at, 0, partial(pipe, [
+            filter_strategies[residual_filter_strategy],
+            partial(crop_strategies[crop_strategy], crop_size)
+        ])),
+        partial(evolve_at, 1, transform_to_sample_weight)
     ])
 
     pool = ThreadPool(initializer=np.random.seed)
@@ -139,13 +145,23 @@ def conduct(
     to_batch = partial(in_batches, batch_size)
 
     paths, labels = zip(*test)
-    x_test = np.stack(list(tqdm(pool.imap(test_pipeline, paths))))
-    y_test = np.stack(label_encoder(labels))
+    x_test = list()
+    sample_weights_test = list()
+    y_test = label_encoder(labels)
+
+    for x, sample_weight in tqdm(pool.imap(test_pipeline, paths)):
+        x_test.append(x)
+        sample_weights_test.append(sample_weight)
 
     input_shape = (crop_size, crop_size, 3)
     num_classes = len(all_labels)
     model = networks[network](input_shape, num_classes)
-    model.compile(optimizers[optimizer], loss='sparse_categorical_crossentropy', metrics=['acc'])
+    model.compile(
+        optimizers[optimizer],
+        loss='sparse_categorical_crossentropy',
+        metrics=['acc'],
+        weighted_metrics=['acc']
+    )
 
     print(model.summary())
 
@@ -153,7 +169,10 @@ def conduct(
         np.random.shuffle(train)
         paths, labels = zip(*train)
         labels = label_encoder(labels)
-        return zip(to_batch(pool.imap(train_pipeline, paths)), to_batch(labels))
+        batched_labels = to_batch(labels)
+
+        for batch in to_batch(pool.imap(train_pipeline, paths)):
+            yield (np.stack(batch[:, 0]), np.stack(next(batched_labels)), np.stack(batch[:, 1]))
 
     model.fit_generator(
         generator=infinite_generator(train_generator_initializer),
@@ -161,6 +180,6 @@ def conduct(
         epochs=n_epochs,
         verbose=2,
         callbacks=[available_callbacks[name] for name in callbacks],
-        validation_data=(x_test, y_test),
+        validation_data=(np.stack(x_test), np.stack(y_test), np.stack(sample_weights_test)),
         initial_epoch=0
     )

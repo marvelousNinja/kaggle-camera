@@ -21,3 +21,13 @@ def encode_labels(all_labels, labels):
     for code, label in enumerate(all_labels):
         mapped_labels[mapped_labels == label] = code
     return mapped_labels
+
+def evolve_at(key, func, target):
+    target[key] = func(target[key])
+    return target
+
+def transform_to_sample_weight(transform_name):
+    if transform_name == 'identity':
+        return 0.7
+    else:
+        return 0.3

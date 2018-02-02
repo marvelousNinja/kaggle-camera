@@ -35,7 +35,8 @@ def random_transform(transforms_and_weights, image):
     weights = np.array(weights)
     probabilities = weights / sum(weights)
     transform = np.random.choice(transforms, p=probabilities)
-    return transform(image)
+    # TODO AS: Seems a bit magical, but changing transforms_and_weights to include names...
+    return [transform(image), getattr(transform, '__name__', 'unknown')]
 
 def crop_random(size, image):
     top_x = np.random.randint(image.shape[0] - size)
