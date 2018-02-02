@@ -47,3 +47,4 @@ logdir
 .cache
 .kaggle-cli
 .env
+*.hdf5

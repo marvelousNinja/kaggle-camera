@@ -1,11 +1,12 @@
 import os
+from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from functools import partial
 
 from tqdm import tqdm
 import numpy as np
 from keras.optimizers import Adam, SGD
-from keras.callbacks import ReduceLROnPlateau
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 
 from camera.utils import pipe, encode_labels, in_batches, evolve_at, transform_to_sample_weight
 from camera.data import list_all_samples_in, train_test_holdout_split, list_dirs_in
@@ -111,11 +112,17 @@ def conduct(
 
     n_batches = int(np.ceil(len(train) / batch_size))
 
+    timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
     available_callbacks = {
         'sgdr': SGDWarmRestart(max_lr=learning_rate, steps_per_epoch=n_batches, verbose=verbose),
         'unfreeze': UnfreezeAfterEpoch(0, verbose=verbose),
         'reduce_lr': ReduceLROnPlateau(patience=10, min_lr=0.5e-6, factor=np.sqrt(0.1), verbose=verbose),
-        'switch': SwitchOptimizer(10, optimizers['sgd'], verbose=verbose)
+        'switch': SwitchOptimizer(10, optimizers['sgd'], verbose=verbose),
+        'checkpoints': ModelCheckpoint(
+            os.path.join(data_dir, 'models', f'{network}-{crop_size}-{timestr}-' + '{epoch:02d}-{val_acc}-{val_loss}.hdf5'),
+            save_best_only=True,
+            period=5
+        )
     }
 
     weighters = {

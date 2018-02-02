@@ -8,6 +8,12 @@ from camera.experiments.residual_cnn import conduct as conduct_residual_cnn
 load_dotenv(find_dotenv())
 
 @task
+def clean(ctx):
+    data_dir = os.environ['DATA_DIR']
+    os.path.join(data_dir, 'models')
+    ctx.run(f'rm {os.path.join(data_dir, "models")}/*')
+
+@task
 def download(ctx):
     competition = os.environ['KAGGLE_COMPETITION']
     username = os.environ['KAGGLE_USERNAME']
