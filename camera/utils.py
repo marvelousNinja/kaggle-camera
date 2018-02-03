@@ -17,6 +17,9 @@ def in_batches(batch_size, iterable):
     if len(batch) > 0:
         yield np.stack(batch)
 
+def only_at(key, iterable):
+    return map(lambda obj: obj[key], iterable)
+
 def in_x_y_s_batches(batch_size, iterable):
     x_batch = list()
     y_batch = list()
@@ -47,7 +50,7 @@ def transform_to_sample_weight(transform_name):
 
 def generate_model_name(network, crop_size):
     timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
-    return f'{network}-{crop_size}-{timestr}-' + '{epoch:02d}-{val_acc:05f}-{val_loss:05f}.hdf5'
+    return f'{network}-{crop_size}-{timestr}-' + '{epoch:02d}-{val_acc:.5f}-{val_loss:.5f}.hdf5'
 
 def generate_samples(pool, shuffle, pipeline, records):
     records = list(records)

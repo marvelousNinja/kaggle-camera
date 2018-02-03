@@ -1,6 +1,7 @@
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.layers import Dense, GlobalAveragePooling2D
-from keras.models import load_model
+from keras.applications.mobilenet import relu6, DepthwiseConv2D
+from keras.utils.generic_utils import CustomObjectScope
 
 from keras.applications import (
     DenseNet121,
@@ -123,3 +124,7 @@ def get_model(name):
         'nasnet_mobile': nasnet_mobile,
         'nasnet_large': nasnet_large
     }[name]
+
+def load(path):
+    with CustomObjectScope({ 'relu6': relu6, 'DepthwiseConv2D': DepthwiseConv2D }):
+        return load_model(path)
