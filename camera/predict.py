@@ -4,7 +4,6 @@ from multiprocessing.pool import ThreadPool
 from fire import Fire
 from dotenv import load_dotenv, find_dotenv
 import numpy as np
-from keras.utils.generic_utils import CustomObjectScope
 from camera.utils import generate_model_name, in_x_y_s_batches, generate_samples, only_at
 from camera.pipelines import validation_pipeline
 from camera.data import get_datasets
@@ -15,7 +14,7 @@ load_dotenv(find_dotenv())
 
 def predict(
         path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
-        image_filter='spam_11_5', apply_transforms=True, apply_flips=True
+        image_filter='spam_11_5'
     ):
     _, _, holdout = get_datasets(data_dir)
 
@@ -25,9 +24,15 @@ def predict(
     model = load(path)
 
     pool = ThreadPool(initializer=np.random.seed)
+    process_validation_image = partial(validation_pipeline, image_filter, False, crop_size)
+    validation_generator = generate_samples(pool, False, process_validation_image, holdout)
+    validation_generator = in_x_y_s_batches(batch_size, validation_generator)
+    validation_generator = only_at(0, validation_generator)
+
     predictions = model.predict_generator(
-        generator=only_at(0, in_x_y_s_batches(batch_size, generate_samples(pool, True, partial(validation_pipeline, crop_size, image_filter, apply_transforms, apply_flips, False), holdout))),
-        steps=int(np.ceil(len(holdout) / batch_size))
+        generator=validation_generator,
+        steps=int(np.ceil(len(holdout) / batch_size)),
+        verbose=1
     )
 
     print(classification_report(labels, np.argmax(predictions, axis=1), labels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))

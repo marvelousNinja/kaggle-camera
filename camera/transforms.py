@@ -93,9 +93,13 @@ def image_filters():
 
 def random_flip(image):
     if np.random.rand() < 0.5:
-        image = np.fliplr(image)
+        if np.random.rand() < 0.5:
+            image = np.fliplr(image)
 
-    if np.random.rand() < 0.5:
-        image = np.rot90(image)
+        if np.random.rand() < 0.5:
+            image = np.rot90(image)
+
+        if np.random.rand() < 0.5:
+            image = np.flipud(image)
 
     return image
