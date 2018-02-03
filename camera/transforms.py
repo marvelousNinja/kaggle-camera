@@ -82,3 +82,11 @@ def spam_14_edge(image):
 
 def subtract_mean(image):
     return image.astype(np.float32) - [122.7717, 115.9465, 102.9801]
+
+def image_filters():
+    return {
+        'subtract_mean': subtract_mean,
+        'spam_11_3': spam_11_3,
+        'spam_11_5': spam_11_5,
+        'spam_14_edge': spam_14_edge
+    }

@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime
 
 def pipe(funcs, target):
     result = target
@@ -16,11 +17,23 @@ def in_batches(batch_size, iterable):
     if len(batch) > 0:
         yield np.stack(batch)
 
-def encode_labels(all_labels, labels):
-    mapped_labels = np.array(labels)
-    for code, label in enumerate(all_labels):
-        mapped_labels[mapped_labels == label] = code
-    return mapped_labels
+def in_x_y_s_batches(batch_size, iterable):
+    x_batch = list()
+    y_batch = list()
+    sample_weights_batch = list()
+    for x, y, sample_weight in iterable:
+        x_batch.append(x)
+        y_batch.append(y)
+        sample_weights_batch.append(sample_weight)
+
+        if len(x_batch) == batch_size:
+            yield np.stack(x_batch), np.stack(y_batch), np.stack(sample_weights_batch)
+            x_batch = list()
+            y_batch = list()
+            sample_weights_batch = list()
+
+    if len(x_batch) > 0:
+        yield np.stack(x_batch), np.stack(y_batch), np.stack(sample_weights_batch)
 
 def evolve_at(key, func, target):
     target[key] = func(target[key])
@@ -31,3 +44,15 @@ def transform_to_sample_weight(transform_name):
         return 0.7
     else:
         return 0.3
+
+def generate_model_name(network, crop_size):
+    timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
+    return f'{network}-{crop_size}-{timestr}-' + '{epoch:02d}-{val_acc:05f}-{val_loss:05f}.hdf5'
+
+def generate_samples(pool, shuffle, pipeline, records):
+    records = list(records)
+    if shuffle: np.random.shuffle(records)
+    return pool.imap(pipeline, records)
+
+def in_loop(initializer):
+    while True: yield from initializer()

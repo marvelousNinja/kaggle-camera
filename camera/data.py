@@ -6,6 +6,15 @@ import jpeg4py as jpeg
 def read_jpeg(path):
     return jpeg.JPEG(str(path)).decode()
 
+def read_jpeg_cached(cache, preprocess, path):
+    image = cache.get(path)
+    if image is not None:
+        return image
+    else:
+        image = preprocess(read_jpeg(path))
+        cache[path] = image
+        return image
+
 def list_images_in(path):
     extensions = ['jpg', 'JPG', 'tiff', 'png']
     files = []
@@ -16,22 +25,35 @@ def list_images_in(path):
 def list_dirs_in(path):
     return [dir for dir in os.listdir(path) if not dir.startswith('.')]
 
+def label_mapping(path):
+    all_labels = list_dirs_in(path)
+    mapping = dict()
+
+    for i, label in enumerate(all_labels):
+        mapping[label] = i
+
+    return mapping
+
 def list_all_samples_in(path):
-    image_paths_and_labels = []
+    image_paths_and_labels = list()
+    mapping = label_mapping(path)
 
     for label in list_dirs_in(path):
         image_paths = list_images_in(os.path.join(path, label))
-        labels = [label] * len(image_paths)
-        image_paths_and_labels.extend(zip(image_paths, labels))
+        image_paths_and_labels.extend(map(lambda path: [path, mapping[label]], image_paths))
 
     return image_paths_and_labels
 
 def train_test_holdout_split(samples, seed=11):
     np.random.seed(seed)
-    shuffled_samples = np.array(samples)
+    shuffled_samples = list(samples)
     np.random.shuffle(shuffled_samples)
     sample_count = len(samples)
     train = shuffled_samples[0:int(sample_count * 0.7)]
     test = shuffled_samples[int(sample_count * 0.7):int(sample_count * 0.85)]
     holdout = shuffled_samples[int(sample_count * 0.85):]
     return train, test, holdout
+
+def get_datasets(data_dir):
+    all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
+    return train_test_holdout_split(all_samples)

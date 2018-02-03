@@ -3,7 +3,7 @@ from keras.callbacks import Callback
 import keras.backend as K
 from camera.networks import unfreeze_all_layers
 
-class UnfreezeAfterEpoch(Callback):
+class Unfreeze(Callback):
     def __init__(self, epoch, verbose=0):
         super()
         self.epoch = epoch
@@ -20,9 +20,9 @@ class UnfreezeAfterEpoch(Callback):
             )
 
             if self.verbose > 0:
-                print(f'Epoch {epoch}: UnfreezeAfterEpoch is unfreezing layers')
+                print(f'Epoch {epoch}: Unfreeze is unfreezing layers')
 
-class SGDWarmRestart(Callback):
+class WarmRestartSGD(Callback):
     def __init__(self, steps_per_epoch, min_lr=1e-5, max_lr=0.05, period_in_epochs=10.0, period_growth_rate=2.0, verbose=0):
         super()
         self.min_lr = min_lr
@@ -41,12 +41,12 @@ class SGDWarmRestart(Callback):
         K.set_value(self.model.optimizer.lr, new_lr)
 
         if self.verbose > 1:
-            print(f'SGDWarmRestart is setting learning rate to {new_lr}')
+            print(f'WarmRestartSGD is setting learning rate to {new_lr}')
 
         self.progress += 1 / self.steps_per_epoch
         if self.progress >= self.period_in_epochs:
             if self.verbose > 0:
-                print(f'Period of {self.period_in_epochs} ended: SGDWarmRestart is restarting the optimizer')
+                print(f'Period of {self.period_in_epochs} ended: WarmRestartSGD is restarting the optimizer')
             self.progress = 0
             self.period_in_epochs = self.period_growth_rate * self.period_in_epochs
 

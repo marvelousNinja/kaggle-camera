@@ -1,5 +1,6 @@
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
+from keras.models import load_model
 
 from keras.applications import (
     DenseNet121,
@@ -9,7 +10,9 @@ from keras.applications import (
     InceptionResNetV2,
     InceptionV3,
     ResNet50,
-    Xception
+    Xception,
+    NASNetMobile,
+    NASNetLarge
 )
 
 def drop_layers(n, model):
@@ -72,14 +75,12 @@ def inception_resnet_v2(input_shape, num_classes):
     x = Dense(num_classes, activation='softmax')(x)
     return Model(inputs=model.input, outputs=x)
 
-
 def inception_v3(input_shape, num_classes):
     model = freeze_all_layers(InceptionV3(include_top=False, input_shape=input_shape))
     x = model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(num_classes, activation='softmax')(x)
     return Model(inputs=model.input, outputs=x)
-
 
 def resnet_50(input_shape, num_classes):
     model = freeze_all_layers(ResNet50(include_top=False, input_shape=input_shape))
@@ -94,3 +95,31 @@ def xception(input_shape, num_classes):
     x = GlobalAveragePooling2D()(x)
     x = Dense(num_classes, activation='softmax')(x)
     return Model(inputs=model.input, outputs=x)
+
+def nasnet_mobile(input_shape, num_classes):
+    model = freeze_all_layers(NASNetMobile(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
+
+def nasnet_large(input_shape, num_classes):
+    model = freeze_all_layers(NASNetLarge(include_top=False, input_shape=input_shape))
+    x = model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(num_classes, activation='softmax')(x)
+    return Model(inputs=model.input, outputs=x)
+
+def get_model(name):
+    return {
+        'densenet_121': densenet_121,
+        'densenet_169': densenet_169,
+        'densenet_201': densenet_201,
+        'mobile_net': mobile_net,
+        'inception_resnet_v2': inception_resnet_v2,
+        'inception_v3': inception_v3,
+        'resnet_50': resnet_50,
+        'xception': xception,
+        'nasnet_mobile': nasnet_mobile,
+        'nasnet_large': nasnet_large
+    }[name]
