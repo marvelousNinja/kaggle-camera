@@ -90,3 +90,12 @@ def image_filters():
         'spam_11_5': spam_11_5,
         'spam_14_edge': spam_14_edge
     }
+
+def random_flip(image):
+    if np.random.rand() < 0.5:
+        image = np.fliplr(image)
+
+    if np.random.rand() < 0.5:
+        image = np.rot90(image)
+
+    return image
