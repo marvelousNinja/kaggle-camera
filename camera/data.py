@@ -2,6 +2,10 @@ import os
 import glob
 import numpy as np
 import jpeg4py as jpeg
+import cv2
+
+def read_png(path):
+    return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
 
 def read_jpeg(path):
     return jpeg.JPEG(str(path)).decode()
@@ -16,7 +20,7 @@ def read_jpeg_cached(cache, preprocess, path):
         return image
 
 def list_images_in(path):
-    extensions = ['jpg', 'JPG', 'tiff', 'png']
+    extensions = ['jpg', 'JPG', 'tif', 'png']
     files = []
     for extension in extensions:
         files.extend(glob.glob(path + f'/*.{extension}'))
@@ -33,6 +37,10 @@ def label_mapping(path):
         mapping[label] = i
 
     return mapping
+
+def inverse_label_mapping(path):
+    mapping = label_mapping(path)
+    return { v: k for k, v in mapping.items() }
 
 def list_all_samples_in(path):
     image_paths_and_labels = list()
@@ -57,3 +65,6 @@ def train_test_holdout_split(samples, seed=11):
 def get_datasets(data_dir):
     all_samples = list_all_samples_in(os.path.join(data_dir, 'train'))
     return train_test_holdout_split(all_samples)
+
+def get_test_dataset(data_dir):
+    return list_images_in(os.path.join(data_dir, 'test'))

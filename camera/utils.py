@@ -52,6 +52,10 @@ def generate_model_name(network, crop_size):
     timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
     return f'{network}-{crop_size}-{timestr}-' + '{epoch:02d}-{val_acc:.5f}-{val_loss:.5f}.hdf5'
 
+def generate_submission_name(network):
+    timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
+    return f'submission-{timestr}-{network[:-5]}.csv'
+
 def generate_samples(pool, shuffle, pipeline, records):
     records = list(records)
     if shuffle: np.random.shuffle(records)

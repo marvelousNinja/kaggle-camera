@@ -1,7 +1,7 @@
 from functools import partial
 import numpy as np
 from camera.utils import pipe, evolve_at, transform_to_sample_weight
-from camera.data import read_jpeg, read_jpeg_cached
+from camera.data import read_jpeg, read_jpeg_cached, read_png
 from camera.transforms import crop_center, random_transform, default_transforms_and_weights, crop_random, image_filters, random_flip, spam_11_5
 
 def training_pipeline(cache, image_filter, allow_flips, allow_weights, crop_size, record):
@@ -27,7 +27,7 @@ def validation_pipeline(image_filter, allow_weights, crop_size, record):
     return [image, label, sample_weight if allow_weights else 1.0]
 
 def submission_pipeline(image_filter, crop_size, path):
-    image = read_jpeg(path)
+    image = read_png(path)
     image = crop_center(crop_size, image)
     image = image_filters()[image_filter](image)
     return image
