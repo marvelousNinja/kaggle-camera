@@ -47,5 +47,5 @@ def download_extras(ctx):
 
     with ctx.cd(data_dir):
         for label in labels:
-            ctx.run(f'wget -nc --tries=10 --max-redirect 0 -i ./extra/{label}/urls -P ./extra/{label}')
-            ctx.run(f'wget -nc --tries=10 --max-redirect 0 -i ./validation/{label}/urls -P ./validation/{label}')
+            ctx.run(f'wget -q --show-progress -nc --tries=10 --max-redirect 0 -i ./extra/{label}/urls -P ./extra/{label}')
+            ctx.run(f'wget -q --show-progress -nc --tries=10 --max-redirect 0 -i ./validation/{label}/urls -P ./validation/{label}')
