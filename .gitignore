@@ -48,3 +48,4 @@ logdir
 .kaggle-cli
 .env
 *.hdf5
+/data
