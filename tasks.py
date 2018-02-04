@@ -48,7 +48,6 @@ def download_extras(ctx):
         'Sony-NEX-7'
     ]
 
-    with ctx.cd(data_dir):
-        for label in labels:
-            ctx.run(f'wget -q --show-progress -nc --tries=10 --max-redirect 0 -i ./extra/{label}/urls -P ./extra/{label}', pty=True)
-            ctx.run(f'wget -q --show-progress --tries=10 --max-redirect 0 -i ./validation/{label}/urls -P ./validation/{label}', pty=True)
+    for label in labels:
+        ctx.run(f'wget -q --show-progress --tries=10 --max-redirect 0 -i -nc {data_dir}/extra/{label}/urls -P {data_dir}/extra/{label}', hide=False, warn=True)
+        ctx.run(f'wget -q --show-progress --tries=10 --max-redirect 0 -i {data_dir}/validation/{label}/urls -P {data_dir}/validation/{label}', hide=False, warn=True)
