@@ -26,6 +26,9 @@ def download(ctx):
         ctx.run(f'unzip sample_submission.csv.zip -d {data_dir}')
         ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
 
+# TODO AS: Fails after first label
+# Do it manually for now
+# wget -nc --tries=10 -q --show-progress --max-redirect 0 -i urls
 @task
 def download_extras(ctx):
     data_dir = os.environ['DATA_DIR']
