@@ -25,3 +25,27 @@ def download(ctx):
         ctx.run(f'unzip train.zip -d {data_dir}')
         ctx.run(f'unzip sample_submission.csv.zip -d {data_dir}')
         ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
+
+@task
+def download_extras(ctx):
+    data_dir = os.environ['DATA_DIR']
+    ctx.run(f'cp -R extra {data_dir}')
+    ctx.run(f'cp -R validation {data_dir}')
+
+    labels = [
+        'HTC-1-M7',
+        'Motorola-X',
+        'iPhone-4s',
+        'LG-Nexus-5x',
+        'Samsung-Galaxy-Note3',
+        'iPhone-6',
+        'Motorola-Droid-Maxx',
+        'Samsung-Galaxy-S4',
+        'Motorola-Nexus-6',
+        'Sony-NEX-7'
+    ]
+
+    with ctx.cd(data_dir):
+        for label in labels:
+            ctx.run(f'wget -nc --tries=10 --max-redirect 0 -i ./extra/{label}/urls -P ./extra/{label}')
+            ctx.run(f'wget -nc --tries=10 --max-redirect 0 -i ./validation/{label}/urls -P ./validation/{label}')
