@@ -32,7 +32,7 @@ def make_submission(
 
     network_name = os.path.basename(path)
     submission_path = os.path.join(data_dir, 'submissions', generate_submission_name(network_name))
-    label_mapping = inverse_label_mapping(os.path.join(data_dir, 'train'))
+    label_mapping = inverse_label_mapping()
     df = pd.DataFrame({
         'fname': list(map(lambda path: os.path.basename(path), test)),
         'camera': list(map(lambda code: label_mapping[code], np.argmax(predictions, axis=1)))

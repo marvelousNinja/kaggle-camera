@@ -29,22 +29,27 @@ def list_images_in(path):
 def list_dirs_in(path):
     return [dir for dir in os.listdir(path) if not dir.startswith('.')]
 
-def label_mapping(path):
-    all_labels = list_dirs_in(path)
-    mapping = dict()
+def label_mapping():
+    return {
+        'Sony-NEX-7': 0,
+        'iPhone-4s': 1,
+        'iPhone-6': 2,
+        'HTC-1-M7': 3,
+        'Samsung-Galaxy-Note3': 4,
+        'Samsung-Galaxy-S4': 5,
+        'LG-Nexus-5x': 6,
+        'Motorola-Droid-Maxx': 7,
+        'Motorola-Nexus-6': 8,
+        'Motorola-X': 9
+    }
 
-    for i, label in enumerate(all_labels):
-        mapping[label] = i
-
-    return mapping
-
-def inverse_label_mapping(path):
-    mapping = label_mapping(path)
+def inverse_label_mapping():
+    mapping = label_mapping()
     return { v: k for k, v in mapping.items() }
 
 def list_all_samples_in(path):
     image_paths_and_labels = list()
-    mapping = label_mapping(path)
+    mapping = label_mapping()
 
     for label in list_dirs_in(path):
         image_paths = list_images_in(os.path.join(path, label))
