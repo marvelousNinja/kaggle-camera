@@ -24,10 +24,11 @@ def list_images_in(path):
     files = []
     for extension in extensions:
         files.extend(glob.glob(path + f'/*.{extension}'))
-    return files
+    return np.sort(files)
 
 def list_dirs_in(path):
-    return [dir for dir in os.listdir(path) if not dir.startswith('.')]
+    dirs = [dir for dir in os.listdir(path) if not dir.startswith('.')]
+    return np.sort(dirs)
 
 def label_mapping():
     return {
@@ -65,6 +66,9 @@ def train_test_holdout_split(samples, seed=11):
     train = shuffled_samples[0:int(sample_count * 0.7)]
     test = shuffled_samples[int(sample_count * 0.7):int(sample_count * 0.85)]
     holdout = shuffled_samples[int(sample_count * 0.85):]
+
+    print('First 5 holdout samples...')
+    print(np.array(holdout[:5]))
     return train, test, holdout
 
 def get_datasets(data_dir):
