@@ -1,6 +1,7 @@
 from functools import partial
 import numpy as np
 import cv2
+import keras.applications
 
 def identity(image):
     return image
@@ -85,6 +86,9 @@ def subtract_mean(image):
 
 def image_filters():
     return {
+        'densenet': keras.applications.densenet.preprocess_input,
+        'resnet50': keras.applications.resnet50.preprocess_input,
+        'mobilenet': keras.applications.resnet50.preprocess_input,
         'subtract_mean': subtract_mean,
         'spam_11_3': spam_11_3,
         'spam_11_5': spam_11_5,
