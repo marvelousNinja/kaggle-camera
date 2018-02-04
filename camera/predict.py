@@ -18,7 +18,7 @@ def predict(
     ):
     _, _, holdout = get_datasets(data_dir)
 
-    holdout = holdout[:batch_size]
+    holdout = holdout
     labels = np.array(holdout)[:, 1].astype(np.int)
 
     model = load(path)

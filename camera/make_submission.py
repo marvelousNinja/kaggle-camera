@@ -16,7 +16,7 @@ def make_submission(
         path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
         image_filter='spam_11_5'
     ):
-    test = get_test_dataset(data_dir)[:batch_size]
+    test = get_test_dataset(data_dir)
 
     pool = ThreadPool(initializer=np.random.seed)
     process_submission_image = partial(submission_pipeline, image_filter, crop_size)
