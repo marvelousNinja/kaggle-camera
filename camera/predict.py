@@ -6,7 +6,7 @@ from dotenv import load_dotenv, find_dotenv
 import numpy as np
 from camera.utils import generate_model_name, in_x_y_s_batches, generate_samples, only_at
 from camera.pipelines import validation_pipeline
-from camera.data import get_datasets
+from camera.data import get_datasets, get_flickr_dataset, get_reviews_dataset
 from camera.networks import load
 from sklearn.metrics import classification_report, log_loss, confusion_matrix, accuracy_score
 
@@ -16,7 +16,8 @@ def predict(
         path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
         image_filter='spam_11_5'
     ):
-    _, _, holdout = get_datasets(data_dir)
+
+    holdout = get_reviews_dataset(data_dir)
 
     holdout = holdout
     labels = np.array(holdout)[:, 1].astype(np.int)
