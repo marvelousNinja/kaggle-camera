@@ -20,7 +20,7 @@ def read_jpeg_cached(cache, preprocess, path):
         return image
 
 def list_images_in(path):
-    extensions = ['jpg', 'JPG', 'tif', 'png']
+    extensions = ['jpg', 'JPG', 'tif', 'png', 'jpg.*']
     files = []
     for extension in extensions:
         files.extend(glob.glob(path + f'/*.{extension}'))
@@ -32,16 +32,16 @@ def list_dirs_in(path):
 
 def label_mapping():
     return {
-        'Sony-NEX-7': 0,
+        'HTC-1-M7': 0,
         'iPhone-4s': 1,
-        'iPhone-6': 2,
-        'HTC-1-M7': 3,
-        'Samsung-Galaxy-Note3': 4,
-        'Samsung-Galaxy-S4': 5,
-        'LG-Nexus-5x': 6,
-        'Motorola-Droid-Maxx': 7,
-        'Motorola-Nexus-6': 8,
-        'Motorola-X': 9
+        'Motorola-Droid-Maxx': 2,
+        'Samsung-Galaxy-Note3': 3,
+        'Samsung-Galaxy-S4': 4,
+        'LG-Nexus-5x': 5,
+        'Motorola-Nexus-6': 6,
+        'iPhone-6': 7,
+        'Motorola-X': 8,
+        'Sony-NEX-7': 9
     }
 
 def inverse_label_mapping():
