@@ -26,9 +26,6 @@ def download(ctx):
         ctx.run(f'unzip sample_submission.csv.zip -d {data_dir}')
         ctx.run('rm -f test.zip train.zip sample_submission.csv.zip')
 
-# TODO AS: Fails after first label
-# Do it manually for now
-# wget -nc --tries=10 -q --show-progress --max-redirect 0 -i urls
 @task
 def download_extras(ctx):
     data_dir = os.environ['DATA_DIR']
@@ -49,5 +46,15 @@ def download_extras(ctx):
     ]
 
     for label in labels:
-        ctx.run(f'wget -q --show-progress --tries=10 --max-redirect 0 -i -nc {data_dir}/extra/{label}/urls -P {data_dir}/extra/{label}', hide=False, warn=True)
-        ctx.run(f'wget -q --show-progress --tries=10 --max-redirect 0 -i {data_dir}/validation/{label}/urls -P {data_dir}/validation/{label}', hide=False, warn=True)
+        # TODO AS: Weird error handling from pyinvoke, catching to continue for now
+        with ctx.cd(f'{data_dir}/flickr/{label}'):
+            try:
+                ctx.run(f'wget --content-on-error --show-progress --tries=10 --max-redirect 0 -nc -i urls')
+            except Exception as e:
+                print(e)
+
+        with ctx.cd(f'{data_dir}/reviews/{label}'):
+            try:
+                ctx.run(f'wget --content-on-error --show-progress --tries=10 --max-redirect 0 -i urls')
+            except Exception as e:
+                print(e)
