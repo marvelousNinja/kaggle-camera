@@ -58,6 +58,17 @@ def list_all_samples_in(path):
 
     return image_paths_and_labels
 
+# TODO AS: Dedup in list all samples in
+def list_unencoded_samples(path):
+    image_paths_and_labels = list()
+
+    for label in list_dirs_in(path):
+        image_paths = list_images_in(os.path.join(path, label))
+        image_paths_and_labels.extend(map(lambda path: [path, label], image_paths))
+
+    return image_paths_and_labels
+
+
 def list_whitelisted_samples_in(path):
     image_paths_and_labels = list()
     mapping = label_mapping()

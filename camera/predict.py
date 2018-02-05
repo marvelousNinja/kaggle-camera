@@ -17,7 +17,7 @@ def predict(
         image_filter='spam_11_5'
     ):
 
-    holdout = get_reviews_dataset(data_dir)
+    holdout = get_flickr_dataset(data_dir)
 
     holdout = holdout
     labels = np.array(holdout)[:, 1].astype(np.int)
