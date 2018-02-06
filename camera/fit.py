@@ -59,7 +59,7 @@ def fit(
         epochs=200,
         verbose=2,
         callbacks=[
-            Unfreeze(0, verbose=1),
+            Unfreeze(1, verbose=1),
             ModelCheckpoint(os.path.join(data_dir, 'models', generate_model_name(network, crop_size)), save_best_only=True, verbose=1),
         ] + [additional_callbacks[callback] for callback in callbacks]
     )

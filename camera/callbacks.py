@@ -9,7 +9,7 @@ class Unfreeze(Callback):
         self.epoch = epoch
         self.verbose = verbose
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
         if epoch == self.epoch:
             unfreeze_all_layers(self.model)
             self.model.compile(
@@ -69,7 +69,7 @@ class SwitchOptimizer(Callback):
         self.optimizer = optimizer
         self.verbose = verbose
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
         if epoch == self.epoch:
             self.model.compile(
                 optimizer=self.optimizer,
