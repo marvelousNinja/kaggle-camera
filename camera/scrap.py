@@ -2,6 +2,7 @@ import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from datetime import datetime
+from urllib.request import urlopen
 from tqdm import tqdm
 import numpy as np
 from fire import Fire
@@ -9,11 +10,15 @@ from flickrapi import FlickrAPI
 from dotenv import load_dotenv, find_dotenv
 import wget
 from retry.api import retry_call
-
+from bs4 import BeautifulSoup
 load_dotenv(find_dotenv())
 
 def download_image(directory, url):
     filename = url.split('/')[-1]
+
+    if filename[-4:] == 'orig':
+        filename = filename + '.jpeg'
+
     local_path = os.path.join(directory, filename)
     if os.path.isfile(local_path):
         return
@@ -24,12 +29,7 @@ def download_image(directory, url):
     except Exception as e:
         print(e)
 
-def scrap(
-        label='Motorola-Droid-Maxx', data_dir=os.environ['DATA_DIR'],
-        api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET'],
-        limit=100, page=None
-    ):
-
+def scrap_flickr(label, api_key, secret, page):
     label_to_camera = {
         # TODO AS: Make sure camera is the same
         # 'Motorola-Droid-Maxx': 'motorola/moto_maxx' # only 9 images
@@ -46,22 +46,23 @@ def scrap(
         #'Motorola-X': 'motorola/moto_x' # lots
     }
 
-    if not page:
-        page = np.random.randint(5)
-
     if label == 'LG-Nexus-5x':
         params = {
             'text': 'nexus 5x',
             'extras': 'url_o',
             'per_page': 500,
-            'page': page
+            'page': page,
+            # October of 2015, release date for 2nd Gen
+            'min_taken_date': 1443646800
         }
     elif label == 'Motorola-X':
         params = {
-            'text': 'motorola moto x',
+            'camera': 'motorola/moto_x',
             'extras': 'url_o',
             'per_page': 500,
-            'page': page
+            'page': page,
+            # September of 2014, release date
+            'min_taken_date': 1409518800
         }
     else:
         params = {
@@ -75,10 +76,6 @@ def scrap(
             # sort='date-posted-desc'
         }
 
-    label_directory = os.path.join(data_dir, 'scrapped', label)
-    if not os.path.isdir(label_directory):
-        os.makedirs(label_directory)
-
     flickr = FlickrAPI(api_key, secret, format='parsed-json')
     response = flickr.photos.search(**params)
 
@@ -86,7 +83,31 @@ def scrap(
     photos = response['photos']['photo']
 
     urls = [photo.get('url_o', None) for photo in photos]
-    urls = list(filter(None, urls))[:limit]
+    return list(filter(None, urls))
+
+def scrap_yandex(model, page):
+    html = urlopen(f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model').read()
+    soup = BeautifulSoup(html, 'html.parser')
+    photo_links = soup.select('a.preview-link img')
+    urls = list(map(lambda link: link['src'], photo_links))
+    return list(map(lambda url: url[:-2] + 'orig', urls))
+
+def scrap(
+        label=None, data_dir=os.environ['DATA_DIR'],
+        api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET'],
+        page_from=0, page_to=1, model=None
+    ):
+
+    label_directory = os.path.join(data_dir, 'scrapped', label)
+    if not os.path.isdir(label_directory):
+        os.makedirs(label_directory)
+
+    urls = list()
+    for page in range(page_from, page_to):
+        if model:
+            urls.extend(scrap_yandex(model, page))
+        else:
+            urls.extend(scrap_flickr(label, api_key, secret, page))
 
     pool = ThreadPool()
     for local_path in tqdm(pool.imap(partial(download_image, label_directory), urls), total=len(urls)):

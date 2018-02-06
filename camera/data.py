@@ -20,7 +20,7 @@ def read_jpeg_cached(cache, preprocess, path):
         return image
 
 def list_images_in(path):
-    extensions = ['jpg', 'JPG', 'tif', 'png', 'jpg.*']
+    extensions = ['jpg', 'JPG', 'tif', 'png', 'jpg.*', 'jpeg']
     files = []
     for extension in extensions:
         files.extend(glob.glob(path + f'/*.{extension}'))

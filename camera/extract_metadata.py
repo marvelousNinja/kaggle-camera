@@ -16,16 +16,15 @@ def extract_single(dataset, path_and_label):
     path = path_and_label[0]
     label = path_and_label[1]
 
-    outcome = shell(f'identify -format "%[EXIF:Make]__%[EXIF:Model]__%m__%Q__%G" {path}')
-
+    outcome = shell(f'identify -format "%[EXIF:Make]__%[EXIF:Model]__%[EXIF:Software]__%m__%Q__%G" {path}')
     if len(outcome.errors()) > 0:
         tqdm.write(str(outcome.errors()))
 
         if len(outcome.output()) == 0:
             return
 
-    # Motorola XT1080 JPEG 95 2432x4320
-    make, model, ext, quality, dimensions = outcome.output()[0].split('__')
+    # Motorola__XT1080__Apobe Photoshop 3.0__JPEG__95__2432x4320
+    make, model, software, ext, quality, dimensions = outcome.output()[0].split('__')
     width, height = dimensions.split('x')
 
     return {
@@ -33,6 +32,7 @@ def extract_single(dataset, path_and_label):
         'label': label,
         'make': make,
         'model': model,
+        'software': software,
         'ext': ext,
         'quality': int(quality),
         'width': int(width),
