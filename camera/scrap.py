@@ -1,4 +1,7 @@
 import os
+from functools import partial
+from multiprocessing.pool import ThreadPool
+from tqdm import tqdm
 from datetime import datetime
 from fire import Fire
 from flickrapi import FlickrAPI
@@ -8,9 +11,22 @@ from retry.api import retry_call
 
 load_dotenv(find_dotenv())
 
+def download_image(directory, url):
+    filename = url.split('/')[-1]
+    local_path = os.path.join(directory, filename)
+    if os.path.isfile(local_path):
+        return
+
+    try:
+        retry_call(lambda: wget.download(url, local_path, bar=None), tries=5, delay=2)
+        return local_path
+    except Exception as e:
+        print(e)
+
 def scrap(
         label='Motorola-Droid-Maxx', data_dir=os.environ['DATA_DIR'],
-        api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET']
+        api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET'],
+        limit=100
     ):
 
     label_to_camera = {
@@ -46,31 +62,22 @@ def scrap(
             # sort='date-posted-desc'
         }
 
+    label_directory = os.path.join(data_dir, 'scrapped', label)
+    if not os.path.isdir(label_directory):
+        os.makedirs(label_directory)
+
     flickr = FlickrAPI(api_key, secret, format='parsed-json')
     response = flickr.photos.search(**params)
 
     print('Number of pages', response['photos']['pages'])
     photos = response['photos']['photo']
 
-    label_directory = os.path.join(data_dir, 'scrapped', label)
-    if not os.path.isdir(label_directory):
-        os.makedirs(label_directory)
+    urls = [photo.get('url_o', None) for photo in photos]
+    urls = list(filter(None, urls))[:limit]
 
-    for photo in photos:
-        url = photo.get('url_o', None)
-
-        if not url:
-            continue
-
-        filename = url.split('/')[-1]
-        local_path = os.path.join(label_directory, filename)
-        if os.path.isfile(local_path):
-            continue
-
-        try:
-            retry_call(lambda: wget.download(url, local_path), tries=5, delay=2)
-        except Exception as e:
-            print(e)
+    pool = ThreadPool()
+    for local_path in tqdm(pool.imap(partial(download_image, label_directory), urls)):
+        if local_path: tqdm.write(f'New image saved {local_path}')
 
 if __name__ == '__main__':
     Fire(scrap)

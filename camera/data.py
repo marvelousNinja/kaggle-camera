@@ -68,7 +68,6 @@ def list_unencoded_samples(path):
 
     return image_paths_and_labels
 
-
 def list_whitelisted_samples_in(path):
     image_paths_and_labels = list()
     mapping = label_mapping()
@@ -108,3 +107,6 @@ def get_flickr_dataset(data_dir):
 
 def get_reviews_dataset(data_dir):
     return list_whitelisted_samples_in(os.path.join(data_dir, 'reviews'))
+
+def get_scrapped_dataset(data_dir):
+    return list_all_samples_in(os.path.join(data_dir, 'scrapped'))
