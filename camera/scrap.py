@@ -1,8 +1,9 @@
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
-from tqdm import tqdm
 from datetime import datetime
+from tqdm import tqdm
+import numpy as np
 from fire import Fire
 from flickrapi import FlickrAPI
 from dotenv import load_dotenv, find_dotenv
@@ -26,7 +27,7 @@ def download_image(directory, url):
 def scrap(
         label='Motorola-Droid-Maxx', data_dir=os.environ['DATA_DIR'],
         api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET'],
-        limit=100
+        limit=100, page=None
     ):
 
     label_to_camera = {
@@ -42,21 +43,33 @@ def scrap(
         'Samsung-Galaxy-S4': 'samsung/galaxy_s4', # lots
         'Samsung-Galaxy-Note3': 'samsung/galaxy-note-3', # lots
         'Motorola-Nexus-6': 'motorola/nexus_6', # lots
-        'Motorola-X': 'motorola/moto_x' # lots
+        #'Motorola-X': 'motorola/moto_x' # lots
     }
+
+    if not page:
+        page = np.random.randint(5)
 
     if label == 'LG-Nexus-5x':
         params = {
             'text': 'nexus 5x',
             'extras': 'url_o',
-            'per_page': 500
+            'per_page': 500,
+            'page': page
+        }
+    elif label == 'Motorola-X':
+        params = {
+            'text': 'motorola moto x',
+            'extras': 'url_o',
+            'per_page': 500,
+            'page': page
         }
     else:
         params = {
             # cm=label_to_camera[label],
             'camera': label_to_camera[label],
             'extras': 'url_o',
-            'per_page': 500
+            'per_page': 500,
+            'page': page
             # TODO AS: Should I make results predictable and use pagination?
             # TODO AS: We can always fetch a random page
             # sort='date-posted-desc'
@@ -76,7 +89,7 @@ def scrap(
     urls = list(filter(None, urls))[:limit]
 
     pool = ThreadPool()
-    for local_path in tqdm(pool.imap(partial(download_image, label_directory), urls)):
+    for local_path in tqdm(pool.imap(partial(download_image, label_directory), urls), total=len(urls)):
         if local_path: tqdm.write(f'New image saved {local_path}')
 
 if __name__ == '__main__':

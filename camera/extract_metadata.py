@@ -50,7 +50,7 @@ def extract_metadata(data_dir=os.environ['DATA_DIR'], rewrite=False, dataset='sc
         remove(ids)
         pairs_to_process = paths_and_labels
     else:
-        dataset_paths = map(lambda doc: doc['path'], dataset_docs)
+        dataset_paths = list(map(lambda doc: doc['path'], dataset_docs))
         for pair in paths_and_labels:
             if pair[0] not in dataset_paths:
                 pairs_to_process.append(pair)
