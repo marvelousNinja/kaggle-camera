@@ -100,8 +100,8 @@ def get_scrapped_dataset(min_quality=90):
     samples = filtered_samples('scrapped')
     samples['label'] = samples.label.map(label_mapping())
     samples = samples[
-        (samples.height > 1024) &
-        (samples.width > 1024) &
+        (samples.height > 904) &
+        (samples.width > 904) &
         (samples.quality >= min_quality)
     ]
     return samples[['path', 'label']].values

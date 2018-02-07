@@ -27,8 +27,6 @@ def fit(
     # TODO AS: Parametrize the dataset
     train = get_scrapped_dataset(min_quality)
     np.random.shuffle(train)
-    # TODO AS: Parametrize limits
-    train = train[:15000]
 
     if overfit_run:
         train = train[:batch_size]
