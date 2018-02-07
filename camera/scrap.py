@@ -24,7 +24,7 @@ def download_image(directory, url):
         return
 
     try:
-        retry_call(lambda: wget.download(url, local_path, bar=None), tries=5, delay=2)
+        retry_call(lambda: wget.download(url, local_path, bar=None), tries=2, delay=1)
         return local_path
     except Exception as e:
         print(e)
