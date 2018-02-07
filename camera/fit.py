@@ -11,6 +11,7 @@ from camera.networks import get_model
 from camera.utils import generate_model_name, in_x_y_s_batches, in_loop, generate_samples
 from camera.pipelines import training_pipeline, validation_pipeline
 from camera.data import get_datasets
+from camera.custom_datasets import get_scrapped_dataset
 
 load_dotenv(find_dotenv())
 
@@ -21,6 +22,10 @@ def fit(
     ):
 
     train, validation, _ = get_datasets(data_dir)
+    # TODO AS: Parametrize the dataset
+    train = get_scrapped_dataset()
+    np.random.shuffle(train)
+
     if overfit_run:
         train = train[:batch_size]
         validation = validation[:batch_size]
