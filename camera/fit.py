@@ -18,7 +18,7 @@ load_dotenv(find_dotenv())
 
 def fit(
         data_dir=os.environ['DATA_DIR'], lr=0.0001, batch_size=16,
-        crop_size=224, network='mobile_net', image_filter='mobilenet', overfit_run=False,
+        crop_size=224, network=None, image_filter=None, overfit_run=False,
         allow_weights=True, allow_flips=True, callbacks=['switch', 'reduce_lr'],
         min_quality=90
     ):

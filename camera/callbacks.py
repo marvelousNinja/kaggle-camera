@@ -23,7 +23,7 @@ class Unfreeze(Callback):
                 print(f'Epoch {epoch + 1}: Unfreeze is unfreezing layers')
 
 class WarmRestartSGD(Callback):
-    def __init__(self, epoch, steps_per_epoch, min_lr=1e-5, max_lr=0.05, period_in_epochs=10.0, period_growth_rate=2.0, verbose=0):
+    def __init__(self, epoch, steps_per_epoch, min_lr=1e-6, max_lr=0.05, period_in_epochs=10.0, period_growth_rate=2.0, verbose=0):
         super()
         self.epoch = epoch
         self.min_lr = min_lr

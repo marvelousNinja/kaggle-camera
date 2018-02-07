@@ -15,7 +15,7 @@ load_dotenv(find_dotenv())
 
 def predict(
         path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
-        image_filter='spam_11_5'
+        image_filter=None
     ):
 
     # TODO AS: Parametrize dataset selection

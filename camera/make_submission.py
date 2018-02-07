@@ -14,7 +14,7 @@ load_dotenv(find_dotenv())
 
 def make_submission(
         path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
-        image_filter='spam_11_5'
+        image_filter=None
     ):
     test = get_test_dataset(data_dir)
 
