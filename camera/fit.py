@@ -12,6 +12,7 @@ from camera.utils import generate_model_name, in_x_y_s_batches, in_loop, generat
 from camera.pipelines import training_pipeline, validation_pipeline
 from camera.data import get_datasets
 from camera.custom_datasets import get_scrapped_dataset
+from sklearn.utils.class_weight import compute_class_weight
 
 load_dotenv(find_dotenv())
 
@@ -29,6 +30,10 @@ def fit(
     if overfit_run:
         train = train[:batch_size]
         validation = validation[:batch_size]
+
+    classes = np.unique(train[:, 1])
+    weights = compute_class_weight('balanced', np.unique(train[:, 1]), train[:, 1])
+    class_weight = dict(zip(classes, weights))
 
     pool = ThreadPool(initializer=np.random.seed)
     process_training_image = partial(
@@ -61,6 +66,7 @@ def fit(
         validation_data=validation_generator,
         steps_per_epoch=int(np.ceil(len(train) / batch_size)),
         validation_steps=int(np.ceil(len(validation) / batch_size)),
+        class_weight=class_weight,
         epochs=200,
         verbose=2,
         callbacks=[
