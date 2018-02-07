@@ -85,8 +85,12 @@ def scrap_flickr(label, api_key, secret, page):
     urls = [photo.get('url_o', None) for photo in photos]
     return list(filter(None, urls))
 
-def scrap_yandex(model, page):
-    html = urlopen(f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model').read()
+def scrap_yandex(model, product_id, page):
+    if product_id:
+        html = urlopen(f'https://fotki.yandex.ru/search.xml?modelid={product_id}&p={page}').read()
+    else:
+        html = urlopen(f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model').read()
+
     soup = BeautifulSoup(html, 'html.parser')
     photo_links = soup.select('a.preview-link img')
     urls = list(map(lambda link: link['src'], photo_links))
@@ -95,7 +99,7 @@ def scrap_yandex(model, page):
 def scrap(
         label=None, data_dir=os.environ['DATA_DIR'],
         api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET'],
-        page_from=0, page_to=1, model=None
+        page_from=0, page_to=1, model=None, product_id=None
     ):
 
     label_directory = os.path.join(data_dir, 'scrapped', label)
@@ -105,7 +109,7 @@ def scrap(
     urls = list()
     for page in range(page_from, page_to):
         if model:
-            urls.extend(scrap_yandex(model, page))
+            urls.extend(scrap_yandex(model, product_id, page))
         else:
             urls.extend(scrap_flickr(label, api_key, secret, page))
 
