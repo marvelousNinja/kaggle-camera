@@ -57,7 +57,8 @@ def scrap_flickr(label, api_key, secret, page):
         }
     elif label == 'Motorola-X':
         params = {
-            'camera': 'motorola/moto_x',
+            # 'camera': 'motorola/moto_x',
+            'text': 'motorola moto x',
             'extras': 'url_o',
             'per_page': 500,
             'page': page,
