@@ -108,7 +108,7 @@ def scrap(
 
     urls = list()
     for page in range(page_from, page_to):
-        if model:
+        if model or product_id:
             urls.extend(scrap_yandex(model, product_id, page))
         else:
             urls.extend(scrap_flickr(label, api_key, secret, page))
