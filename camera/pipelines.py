@@ -11,7 +11,7 @@ def training_pipeline(cache, image_filter, allow_flips, allow_weights, crop_size
     if allow_flips: image = random_flip(image)
     image, transform_name = random_transform(default_transforms_and_weights(), image)
     image = crop_random(crop_size, image)
-    image = image_filters()[image_filter](image)
+    image = image_filters()[image_filter](image.astype(np.float32))
     sample_weight = transform_to_sample_weight(transform_name)
     return [image, label, sample_weight if allow_weights else 1.0]
 
@@ -22,12 +22,12 @@ def validation_pipeline(image_filter, allow_weights, crop_size, record):
     image = crop_center(outer_crop_size, image)
     image, transform_name = random_transform(default_transforms_and_weights(), image)
     image = crop_center(crop_size, image)
-    image = image_filters()[image_filter](image)
+    image = image_filters()[image_filter](image.astype(np.float32))
     sample_weight = transform_to_sample_weight(transform_name)
     return [image, label, sample_weight if allow_weights else 1.0]
 
 def submission_pipeline(image_filter, crop_size, path):
     image = read_png(path)
     image = crop_center(crop_size, image)
-    image = image_filters()[image_filter](image)
+    image = image_filters()[image_filter](image.astype(np.float32))
     return image
