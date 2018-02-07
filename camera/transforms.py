@@ -50,7 +50,7 @@ def crop_center(size, image):
     return np.array(image[top_x:top_x + size, top_y:top_y + size])
 
 def apply_filter(image_filter, image):
-    return np.clip(cv2.filter2D(image.astype(np.float32), -1, image_filter) / 2, -1, 1)
+    return cv2.filter2D(image.astype(np.float32), -1, image_filter)
 
 def spam_11_5(image):
     image_filter = np.array([
