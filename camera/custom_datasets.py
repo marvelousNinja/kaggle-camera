@@ -81,7 +81,7 @@ def get_iphone6_samples(samples):
     ]
 
 def filtered_samples(dataset, limit=1000, seed=11):
-    samples = find_by(lambda q: q.dataset == 'scrapped')
+    samples = find_by(lambda q: q.dataset == dataset)
     samples = pd.DataFrame(samples)
     return pd.concat([
         get_lg_nexus5x_samples(samples),
