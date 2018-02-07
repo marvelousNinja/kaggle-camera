@@ -96,10 +96,10 @@ def filtered_samples(dataset, limit=1000, seed=11):
         get_sony_nex7_samples(samples)
     ])
 
-def get_scrapped_dataset():
+def get_scrapped_dataset(min_quality=90):
     samples = filtered_samples('scrapped')
     samples['label'] = samples.label.map(label_mapping())
-    samples = samples[(samples.height > 512) & (samples.width > 512) & (samples.quality > 90)]
+    samples = samples[(samples.height > 512) & (samples.width > 512) & (samples.quality >= 90)]
     return samples[['path', 'label']].values
 
 if __name__ == '__main__':

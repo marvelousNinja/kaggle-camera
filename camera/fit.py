@@ -18,13 +18,14 @@ load_dotenv(find_dotenv())
 
 def fit(
         data_dir=os.environ['DATA_DIR'], lr=0.0001, batch_size=16,
-        crop_size=224, network='mobile_net', image_filter='spam_11_5', overfit_run=False,
-        allow_weights=True, allow_flips=True, callbacks=['switch', 'reduce_lr']
+        crop_size=224, network='mobile_net', image_filter='mobilenet', overfit_run=False,
+        allow_weights=True, allow_flips=True, callbacks=['switch', 'reduce_lr'],
+        min_quality=90
     ):
 
     train, validation, _ = get_datasets(data_dir)
     # TODO AS: Parametrize the dataset
-    train = get_scrapped_dataset()
+    train = get_scrapped_dataset(min_quality)
     np.random.shuffle(train)
 
     if overfit_run:
