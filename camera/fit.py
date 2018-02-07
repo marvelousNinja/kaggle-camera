@@ -48,7 +48,7 @@ def fit(
 
     additional_callbacks = {
         'switch': SwitchOptimizer(10, SGD(lr, momentum=0.9, nesterov=True), verbose=1),
-        'reduce_lr': ReduceLROnPlateau(patience=10, min_lr=0.5e-6, factor=np.sqrt(0.1), verbose=1),
+        'reduce_lr': ReduceLROnPlateau(patience=5, min_lr=0.5e-6, factor=np.sqrt(0.1), verbose=1),
         'sgdr': WarmRestartSGD(10, int(np.ceil(len(train) / batch_size)), verbose=1)
     }
 

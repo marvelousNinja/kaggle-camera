@@ -18,7 +18,10 @@ def predict(
         image_filter='spam_11_5'
     ):
 
-    holdout = get_scrapped_dataset()
+    # TODO AS: Parametrize dataset selection
+    train, validation, holdout = get_datasets(data_dir)
+    holdout = train
+
     labels = np.array(holdout)[:, 1].astype(np.int)
 
     model = load(path)
