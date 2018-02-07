@@ -87,9 +87,9 @@ def scrap_flickr(label, api_key, secret, page):
 
 def scrap_yandex(model, product_id, page):
     if product_id:
-        html = urlopen(f'https://fotki.yandex.ru/search.xml?modelid={product_id}&p={page}').read()
+        html = urlopen(f'https://fotki.yandex.ru/search.xml?modelid={product_id}&p={page}&how=created').read()
     else:
-        html = urlopen(f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model').read()
+        html = urlopen(f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model&how=created').read()
 
     soup = BeautifulSoup(html, 'html.parser')
     photo_links = soup.select('a.preview-link img')
