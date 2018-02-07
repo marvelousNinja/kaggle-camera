@@ -6,7 +6,7 @@ from camera.transforms import crop_center, random_transform, default_transforms_
 
 def training_pipeline(cache, image_filter, allow_flips, allow_weights, crop_size, record):
     path, label = record
-    outer_crop_size = crop_size * 2 + 8
+    outer_crop_size = crop_size * 4 + 8
     image = read_jpeg_cached(cache, partial(crop_center, outer_crop_size), path)
     if allow_flips: image = random_flip(image)
     image, transform_name = random_transform(default_transforms_and_weights(), image)
@@ -17,7 +17,7 @@ def training_pipeline(cache, image_filter, allow_flips, allow_weights, crop_size
 
 def validation_pipeline(image_filter, allow_weights, crop_size, record):
     path, label = record
-    outer_crop_size = crop_size * 2 + 8
+    outer_crop_size = crop_size * 4 + 8
     image = read_jpeg(path)
     image = crop_center(outer_crop_size, image)
     image, transform_name = random_transform(default_transforms_and_weights(), image)

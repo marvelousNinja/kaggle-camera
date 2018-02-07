@@ -54,7 +54,7 @@ def fit(
 
     additional_callbacks = {
         'switch': SwitchOptimizer(10, SGD(lr, momentum=0.9, nesterov=True), verbose=1),
-        'reduce_lr': ReduceLROnPlateau(patience=5, min_lr=0.5e-6, factor=np.sqrt(0.1), verbose=1),
+        'reduce_lr': ReduceLROnPlateau(patience=4, min_lr=0.5e-6, factor=0.1, verbose=1),
         'sgdr': WarmRestartSGD(10, int(np.ceil(len(train) / batch_size)), verbose=1)
     }
 
@@ -71,7 +71,7 @@ def fit(
         epochs=200,
         verbose=2,
         callbacks=[
-            Unfreeze(1, verbose=1),
+            Unfreeze(0, verbose=1),
             ModelCheckpoint(os.path.join(data_dir, 'models', generate_model_name(network, crop_size)), save_best_only=True, verbose=1),
         ] + [additional_callbacks[callback] for callback in callbacks]
     )
