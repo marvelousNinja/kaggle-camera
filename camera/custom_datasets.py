@@ -2,6 +2,7 @@ import pandas as pd
 from camera.db import find_by
 from camera.data import label_mapping
 
+# TODO AS: HDR photos? HDR doesn't rewrite model here
 def get_lg_nexus5x_samples():
     samples = find_by(lambda q: q.dataset == 'scrapped')
     samples = pd.DataFrame(samples)
@@ -52,7 +53,7 @@ def get_motorolla_nexus6_samples():
 def get_samsung_galaxy_note3_samples():
     samples = find_by(lambda q: q.dataset == 'scrapped')
     samples = pd.DataFrame(samples)
-    valid_models = ['SAMSUNG-SM-N900A', 'SM-N900P', 'SM-N9005']
+    valid_models = ['SAMSUNG-SM-N900A', 'SM-N900P', 'SM-N9005', 'SM-N900A']
     software_patterns = ['N900']
     return samples[
         (samples.model.isin(valid_models)) &
@@ -62,7 +63,7 @@ def get_samsung_galaxy_note3_samples():
 def get_samsung_galaxy_s4_samples():
     samples = find_by(lambda q: q.dataset == 'scrapped')
     samples = pd.DataFrame(samples)
-    valid_models = ['SCH-I545', 'SPH-L720', 'GT-I9505']
+    valid_models = ['SCH-I545', 'SPH-L720', 'GT-I9505', 'SPH-L720T']
     software_patterns = ['I545', 'L720', 'I9505']
     return samples[
         (samples.model.isin(valid_models)) &
@@ -122,4 +123,5 @@ def get_scrapped_dataset():
 
 if __name__ == '__main__':
     print(filtered_samples().groupby(['label', 'make', 'model']).size())
+    print(filtered_samples().groupby(['label']).size().sort_values())
     import pdb; pdb.set_trace()
