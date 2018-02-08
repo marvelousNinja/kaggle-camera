@@ -11,6 +11,7 @@ from camera.data import get_datasets, get_flickr_dataset, get_reviews_dataset
 from camera.custom_datasets import get_scrapped_dataset
 from camera.networks import load
 from sklearn.metrics import classification_report, log_loss, confusion_matrix, accuracy_score
+from scipy.stats.mstats import gmean
 
 load_dotenv(find_dotenv())
 
@@ -32,7 +33,7 @@ def predict(
 
     for crops, _, _ in tqdm(validation_generator, total=len(validation)):
         tta_predictions = model.predict_on_batch(np.array(crops))
-        predictions.append(np.mean(tta_predictions, axis=0))
+        predictions.append(gmean(tta_predictions, axis=0))
 
     predictions = np.array(predictions)
 

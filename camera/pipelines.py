@@ -39,6 +39,7 @@ def tta_pipeline(image_filter, allow_weights, crop_size, record):
     sample_weight = transform_to_sample_weight(transform_name)
 
     image = image.astype(np.float32)
+    rotated_image = np.rot90(image)
     flipped_image = np.fliplr(image)
 
     tta_crops = [
@@ -47,6 +48,11 @@ def tta_pipeline(image_filter, allow_weights, crop_size, record):
         crop_bottom_left(crop_size, image),
         crop_bottom_right(crop_size, image),
         crop_center(crop_size, image),
+        crop_top_left(crop_size, rotated_image),
+        crop_top_right(crop_size, rotated_image),
+        crop_bottom_left(crop_size, rotated_image),
+        crop_bottom_right(crop_size, rotated_image),
+        crop_center(crop_size, rotated_image),
         crop_top_left(crop_size, flipped_image),
         crop_top_right(crop_size, flipped_image),
         crop_bottom_left(crop_size, flipped_image),

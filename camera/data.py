@@ -8,7 +8,9 @@ def read_png(path):
     return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
 
 def read_jpeg(path):
-    return jpeg.JPEG(str(path)).decode()
+    # TODO AS: Doesn't work with some images
+    # return jpeg.JPEG(str(path)).decode()
+    return read_png(path)
 
 def read_jpeg_cached(cache, preprocess, path):
     image = cache.get(path)
