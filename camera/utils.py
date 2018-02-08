@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from datetime import datetime
 
@@ -55,6 +56,10 @@ def generate_model_name(network, crop_size):
 def generate_submission_name(network):
     timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
     return f'submission-{timestr}-{network[:-5]}.csv'
+
+def generate_blend_submission_name(files):
+    shortened_name = '__'.join(map(lambda path: os.path.basename(path)[11:35], files))
+    return f'blend-{shortened_name}.csv'
 
 def generate_samples(pool, shuffle, pipeline, records):
     records = list(records)
