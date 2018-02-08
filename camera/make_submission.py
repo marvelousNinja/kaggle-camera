@@ -1,12 +1,14 @@
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
+from tqdm import tqdm
 from fire import Fire
 from dotenv import load_dotenv, find_dotenv
 import numpy as np
 import pandas as pd
+from scipy.stats.mstats import gmean
 from camera.utils import in_batches, generate_samples, generate_submission_name
-from camera.pipelines import submission_pipeline
+from camera.pipelines import tta_submission_pipeline
 from camera.data import get_test_dataset, inverse_label_mapping
 from camera.networks import load
 
@@ -19,16 +21,17 @@ def make_submission(
     test = get_test_dataset(data_dir)
 
     pool = ThreadPool(initializer=np.random.seed)
-    process_submission_image = partial(submission_pipeline, image_filter, crop_size)
+    process_submission_image = partial(tta_submission_pipeline, image_filter, crop_size)
     submission_generator = generate_samples(pool, False, process_submission_image, test)
-    submission_generator = in_batches(batch_size, submission_generator)
+
+    predictions = []
 
     model = load(path)
-    predictions = model.predict_generator(
-        generator=submission_generator,
-        steps=int(np.ceil(len(test) / batch_size)),
-        verbose=1
-    )
+    for crops in tqdm(submission_generator, total=len(test)):
+        tta_predictions = model.predict_on_batch(np.array(crops))
+        predictions.append(gmean(tta_predictions, axis=0))
+
+    predictions = np.array(predictions)
 
     network_name = os.path.basename(path)
     submission_path = os.path.join(data_dir, 'submissions', generate_submission_name(network_name))

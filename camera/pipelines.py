@@ -39,7 +39,6 @@ def tta_pipeline(image_filter, allow_weights, crop_size, record):
     sample_weight = transform_to_sample_weight(transform_name)
 
     image = image.astype(np.float32)
-    rotated_image = np.rot90(image)
     flipped_image = np.fliplr(image)
 
     tta_crops = [
@@ -48,11 +47,6 @@ def tta_pipeline(image_filter, allow_weights, crop_size, record):
         crop_bottom_left(crop_size, image),
         crop_bottom_right(crop_size, image),
         crop_center(crop_size, image),
-        crop_top_left(crop_size, rotated_image),
-        crop_top_right(crop_size, rotated_image),
-        crop_bottom_left(crop_size, rotated_image),
-        crop_bottom_right(crop_size, rotated_image),
-        crop_center(crop_size, rotated_image),
         crop_top_left(crop_size, flipped_image),
         crop_top_right(crop_size, flipped_image),
         crop_bottom_left(crop_size, flipped_image),
@@ -68,3 +62,24 @@ def submission_pipeline(image_filter, crop_size, path):
     image = crop_center(crop_size, image)
     image = image_filters()[image_filter](image.astype(np.float32))
     return image
+
+def tta_submission_pipeline(image_filter, crop_size, path):
+    image = read_png(path)
+    image = image.astype(np.float32)
+    flipped_image = np.fliplr(image)
+
+    tta_crops = [
+        crop_top_left(crop_size, image),
+        crop_top_right(crop_size, image),
+        crop_bottom_left(crop_size, image),
+        crop_bottom_right(crop_size, image),
+        crop_center(crop_size, image),
+        crop_top_left(crop_size, flipped_image),
+        crop_top_right(crop_size, flipped_image),
+        crop_bottom_left(crop_size, flipped_image),
+        crop_bottom_right(crop_size, flipped_image),
+        crop_center(crop_size, flipped_image),
+    ]
+
+    tta_crops = list(map(image_filters()[image_filter], tta_crops))
+    return tta_crops
