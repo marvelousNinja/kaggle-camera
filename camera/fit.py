@@ -20,7 +20,7 @@ def fit(
         data_dir=os.environ['DATA_DIR'], lr=0.0001, batch_size=16,
         crop_size=224, network=None, image_filter=None, overfit_run=False,
         allow_weights=True, allow_flips=True, callbacks=['reduce_lr'],
-        min_quality=95
+        min_quality=95, unfreeze_at=0
     ):
 
     train, validation, _ = get_datasets(data_dir)
@@ -71,7 +71,7 @@ def fit(
         epochs=200,
         verbose=2,
         callbacks=[
-            Unfreeze(0, verbose=1),
+            Unfreeze(unfreeze_at, verbose=1),
             ModelCheckpoint(os.path.join(data_dir, 'models', generate_model_name(network, crop_size)), save_best_only=True, verbose=1),
         ] + [additional_callbacks[callback] for callback in callbacks]
     )
