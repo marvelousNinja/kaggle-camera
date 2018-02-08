@@ -2,12 +2,10 @@ import pandas as pd
 from camera.db import find_by
 from camera.data import label_mapping
 
-# TODO AS: HDR photos? HDR doesn't rewrite model here
 def get_lg_nexus5x_samples(samples):
-    valid_models = ['Nexus 5X']
     return samples[
-        (samples.model.isin(valid_models)) &
-        (samples.software.str.contains('bullhead'))
+        samples.software.str.contains('bullhead') |
+        ((samples.model == 'Nexus 5X') & samples.software.str.match('HDR'))
     ]
 
 def get_htc_one_samples(samples):
@@ -31,13 +29,11 @@ def get_motorolla_maxx_samples(samples):
         (samples.software == '')
     ]
 
-# TODO AS: HDR+ pictures... they overwrite model data
-# TODO AS: HDR+ and Make = motorola
 def get_motorolla_nexus6_samples(samples):
-    valid_models = ['Nexus 6']
     return samples[
-        (samples.model.isin(valid_models)) &
-        (samples.software == '')
+        ((samples.model == 'Nexus 6') & (samples.software == '')) |
+        ((samples.model == '') & (samples.software.str.match('angler'))) |
+        ((samples.model == 'Nexus 6') & (samples.software.str.match('HDR')))
     ]
 
 def get_samsung_galaxy_note3_samples(samples):
@@ -98,6 +94,11 @@ def filtered_samples(dataset):
 
 def get_scrapped_dataset(min_quality=90):
     samples = filtered_samples('scrapped')
+
+    extra_motorola = filtered_samples('flickr')
+    extra_motorola = extra_motorola[extra_motorola['label'] == 'Motorola-X']
+    samples = pd.concat([samples, extra_motorola])
+
     samples['label'] = samples.label.map(label_mapping())
     samples = samples[
         (samples.height > 904) &
