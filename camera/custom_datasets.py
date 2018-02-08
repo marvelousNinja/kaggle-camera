@@ -80,7 +80,7 @@ def get_iphone6_samples(samples):
         (samples.software.str.match('|'.join(software_patterns)))
     ]
 
-def filtered_samples(dataset, limit=1000, seed=11):
+def filtered_samples(dataset):
     samples = find_by(lambda q: q.dataset == dataset)
     samples = pd.DataFrame(samples)
     return pd.concat([
