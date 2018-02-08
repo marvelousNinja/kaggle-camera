@@ -1,5 +1,5 @@
 from keras.models import Model, load_model
-from keras.layers import Dense, BatchNormalization, GlobalAveragePooling2D
+from keras.layers import Dense, BatchNormalization, Dropout, GlobalAveragePooling2D
 from keras.applications.mobilenet import relu6, DepthwiseConv2D
 from keras.utils.generic_utils import CustomObjectScope
 
@@ -67,9 +67,9 @@ def mobile_net(input_shape, num_classes):
     x = model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(512, activation='relu')(x)
-    x = BatchNormalization()(x)
+    x = Dropout(0.3)(x)
     x = Dense(128, activation='relu')(x)
-    x = BatchNormalization()(x)
+    x = Dropout(0.3)(x)
     x = Dense(num_classes, activation='softmax')(x)
     return Model(inputs=model.input, outputs=x)
 
