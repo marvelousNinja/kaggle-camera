@@ -92,22 +92,47 @@ def filtered_samples(dataset):
         get_sony_nex7_samples(samples)
     ])
 
-def get_scrapped_dataset(min_quality=90):
-    samples = filtered_samples('scrapped')
+def get_scrapped_dataset_unmapped(min_quality):
+    scrapped = find_by(lambda q: q.dataset == 'scrapped')
+    scrapped = pd.DataFrame(scrapped)
 
-    extra_motorola = filtered_samples('flickr')
-    extra_motorola = extra_motorola[extra_motorola['label'] == 'Motorola-X']
-    samples = pd.concat([samples, extra_motorola])
-
-    samples['label'] = samples.label.map(label_mapping())
-    samples = samples[
-        (samples.height > 904) &
-        (samples.width > 904) &
-        (samples.quality >= min_quality)
+    scrapped = scrapped[
+        (scrapped.height > 780) &
+        (scrapped.width > 780) &
+        (scrapped.quality >= min_quality)
     ]
+
+    scrapped = pd.concat([
+        get_lg_nexus5x_samples(scrapped).sample(1000),
+        get_htc_one_samples(scrapped).sample(1000),
+        get_motorola_x_samples(scrapped),
+        get_motorolla_maxx_samples(scrapped).sample(1000),
+        get_motorolla_nexus6_samples(scrapped).sample(1000),
+        get_samsung_galaxy_note3_samples(scrapped).sample(1000),
+        get_samsung_galaxy_s4_samples(scrapped).sample(1000),
+        get_iphone4s_samples(scrapped).sample(1000),
+        get_iphone6_samples(scrapped).sample(1000),
+        get_sony_nex7_samples(scrapped).sample(1000)
+    ])
+
+    flickr = find_by(lambda q: q.dataset == 'flickr')
+    flickr = pd.DataFrame(flickr)
+
+    flickr = flickr[
+        (flickr.height > 780) &
+        (flickr.width > 780) &
+        (flickr.quality >= min_quality)
+    ]
+
+    flickr = get_motorola_x_samples(flickr)
+    return pd.concat([scrapped, flickr])
+
+def get_scrapped_dataset(min_quality=95):
+    samples = get_scrapped_dataset_unmapped(min_quality)
+    samples['label'] = samples.label.map(label_mapping())
     return samples[['path', 'label']].values
 
 if __name__ == '__main__':
-    print(filtered_samples('scrapped').groupby(['label', 'make', 'model']).size())
-    print(filtered_samples('scrapped').groupby(['label']).size().sort_values())
+    print(get_scrapped_dataset_unmapped(95).groupby(['label', 'make', 'model']).size())
+    print(get_scrapped_dataset_unmapped(95).groupby(['label']).size().sort_values())
     import pdb; pdb.set_trace()
