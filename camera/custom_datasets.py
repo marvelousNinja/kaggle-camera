@@ -103,16 +103,16 @@ def get_scrapped_dataset_unmapped(min_quality):
     ]
 
     scrapped = pd.concat([
-        get_lg_nexus5x_samples(scrapped).sample(1000),
-        get_htc_one_samples(scrapped).sample(1000),
+        get_lg_nexus5x_samples(scrapped),
+        get_htc_one_samples(scrapped),
         get_motorola_x_samples(scrapped),
-        get_motorolla_maxx_samples(scrapped).sample(1000),
-        get_motorolla_nexus6_samples(scrapped).sample(1000),
-        get_samsung_galaxy_note3_samples(scrapped).sample(1000),
-        get_samsung_galaxy_s4_samples(scrapped).sample(1000),
-        get_iphone4s_samples(scrapped).sample(1000),
-        get_iphone6_samples(scrapped).sample(1000),
-        get_sony_nex7_samples(scrapped).sample(1000)
+        get_motorolla_maxx_samples(scrapped),
+        get_motorolla_nexus6_samples(scrapped),
+        get_samsung_galaxy_note3_samples(scrapped),
+        get_samsung_galaxy_s4_samples(scrapped),
+        get_iphone4s_samples(scrapped),
+        get_iphone6_samples(scrapped),
+        get_sony_nex7_samples(scrapped)
     ])
 
     flickr = find_by(lambda q: q.dataset == 'flickr')
