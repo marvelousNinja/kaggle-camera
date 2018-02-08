@@ -66,10 +66,10 @@ def mobile_net(input_shape, num_classes):
     model = freeze_all_layers(MobileNet(include_top=False, input_shape=input_shape))
     x = model.output
     x = GlobalAveragePooling2D()(x)
-    x = Dense(512, activation='relu')
-    x = BatchNormalization(x)
-    x = Dense(128, activation='relu')
-    x = BatchNormalization(x)
+    x = Dense(512, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(128, activation='relu')(x)
+    x = BatchNormalization()(x)
     x = Dense(num_classes, activation='softmax')(x)
     return Model(inputs=model.input, outputs=x)
 
