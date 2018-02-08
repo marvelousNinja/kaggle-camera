@@ -8,9 +8,7 @@ def read_png(path):
     return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
 
 def read_jpeg(path):
-    # TODO AS: Some images are corrupted, and jpeg4py can't read them...
-    # return jpeg.JPEG(str(path)).decode()
-    return read_png(path)
+    return jpeg.JPEG(str(path)).decode()
 
 def read_jpeg_cached(cache, preprocess, path):
     image = cache.get(path)
