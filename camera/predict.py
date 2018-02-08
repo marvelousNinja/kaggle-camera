@@ -2,10 +2,11 @@ import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from fire import Fire
+from tqdm import tqdm
 from dotenv import load_dotenv, find_dotenv
 import numpy as np
 from camera.utils import generate_model_name, in_x_y_s_batches, generate_samples, only_at
-from camera.pipelines import validation_pipeline
+from camera.pipelines import tta_pipeline
 from camera.data import get_datasets, get_flickr_dataset, get_reviews_dataset
 from camera.custom_datasets import get_scrapped_dataset
 from camera.networks import load
@@ -19,24 +20,21 @@ def predict(
     ):
 
     # TODO AS: Parametrize dataset selection
-    train, validation, holdout = get_datasets(data_dir)
-    holdout = train
-
-    labels = np.array(holdout)[:, 1].astype(np.int)
-
+    validation, _, _ = get_datasets(data_dir)
+    labels = np.array(validation)[:, 1].astype(np.int)
     model = load(path)
 
     pool = ThreadPool(initializer=np.random.seed)
-    process_validation_image = partial(validation_pipeline, image_filter, False, crop_size)
-    validation_generator = generate_samples(pool, False, process_validation_image, holdout)
-    validation_generator = in_x_y_s_batches(batch_size, validation_generator)
-    validation_generator = only_at(0, validation_generator)
+    process_validation_image = partial(tta_pipeline, image_filter, False, crop_size)
+    validation_generator = generate_samples(pool, False, process_validation_image, validation)
 
-    predictions = model.predict_generator(
-        generator=validation_generator,
-        steps=int(np.ceil(len(holdout) / batch_size)),
-        verbose=1
-    )
+    predictions = []
+
+    for crops, _, _ in tqdm(validation_generator, total=len(validation)):
+        tta_predictions = model.predict_on_batch(np.array(crops))
+        predictions.append(np.mean(tta_predictions, axis=0))
+
+    predictions = np.array(predictions)
 
     print(classification_report(labels, np.argmax(predictions, axis=1), labels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
     print(log_loss(labels, predictions, labels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))

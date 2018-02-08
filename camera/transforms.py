@@ -107,3 +107,15 @@ def random_flip(image):
             image = np.flipud(image)
 
     return image
+
+def crop_top_left(crop_size, image):
+    return np.array(image[0:crop_size, 0:crop_size])
+
+def crop_top_right(crop_size, image):
+    return np.array(image[0:crop_size, -crop_size:])
+
+def crop_bottom_left(crop_size, image):
+    return np.array(image[-crop_size:, 0:crop_size])
+
+def crop_bottom_right(crop_size, image):
+    return np.array(image[-crop_size:, -crop_size:])
