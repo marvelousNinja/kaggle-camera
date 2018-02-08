@@ -20,7 +20,7 @@ def fit(
         data_dir=os.environ['DATA_DIR'], lr=0.0001, batch_size=16,
         crop_size=224, network=None, image_filter=None, overfit_run=False,
         allow_weights=True, allow_flips=True, callbacks=['reduce_lr'],
-        min_quality=95, unfreeze_at=0
+        min_quality=95, unfreeze_at=0, switch_at=13
     ):
 
     train, validation, _ = get_datasets(data_dir)
@@ -53,9 +53,9 @@ def fit(
     validation_generator = in_x_y_s_batches(batch_size, validation_generator)
 
     additional_callbacks = {
-        'switch': SwitchOptimizer(10, SGD(lr, momentum=0.9, nesterov=True), verbose=1),
+        'switch': SwitchOptimizer(switch_at, SGD(lr, momentum=0.9, nesterov=True), verbose=1),
         'reduce_lr': ReduceLROnPlateau(patience=4, min_lr=0.1e-6, factor=0.1, verbose=1),
-        'sgdr': WarmRestartSGD(10, int(np.ceil(len(train) / batch_size)), max_lr=lr, verbose=1)
+        'sgdr': WarmRestartSGD(switch_at, int(np.ceil(len(train) / batch_size)), max_lr=lr, verbose=1)
     }
 
     model = get_model(network)((crop_size, crop_size, 3), 10)
