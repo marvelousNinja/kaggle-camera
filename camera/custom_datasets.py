@@ -115,17 +115,7 @@ def get_scrapped_dataset_unmapped(min_quality):
         get_sony_nex7_samples(scrapped)
     ])
 
-    flickr = find_by(lambda q: q.dataset == 'flickr')
-    flickr = pd.DataFrame(flickr)
-
-    flickr = flickr[
-        (flickr.height > 780) &
-        (flickr.width > 780) &
-        (flickr.quality >= min_quality)
-    ]
-
-    flickr = get_motorola_x_samples(flickr)
-    return pd.concat([scrapped, flickr])
+    return scrapped
 
 def get_scrapped_dataset(min_quality=95):
     samples = get_scrapped_dataset_unmapped(min_quality)
