@@ -1,18 +1,29 @@
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
-from fire import Fire
-from dotenv import load_dotenv, find_dotenv
+
 import numpy as np
-from keras.optimizers import SGD, Adam
-from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
-from camera.callbacks import Unfreeze, SwitchOptimizer, WarmRestartSGD
-from camera.networks import get_model
-from camera.utils import generate_model_name, in_x_y_s_batches, in_loop, generate_samples
-from camera.pipelines import training_pipeline, validation_pipeline
-from camera.data import get_datasets
-from camera.custom_datasets import get_scrapped_dataset
+from dotenv import find_dotenv
+from dotenv import load_dotenv
+from fire import Fire
+from keras.optimizers import SGD
+from keras.optimizers import Adam
+from keras.callbacks import ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint
 from sklearn.utils.class_weight import compute_class_weight
+
+from camera.callbacks import Unfreeze
+from camera.callbacks import SwitchOptimizer
+from camera.callbacks import WarmRestartSGD
+from camera.data import get_datasets
+from camera.networks import get_model
+from camera.pipelines import training_pipeline
+from camera.pipelines import validation_pipeline
+from camera.custom_datasets import get_scrapped_dataset
+from camera.utils import generate_model_name
+from camera.utils import generate_samples
+from camera.utils import in_loop
+from camera.utils import in_x_y_s_batches
 
 load_dotenv(find_dotenv())
 

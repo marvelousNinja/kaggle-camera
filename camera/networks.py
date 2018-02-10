@@ -1,6 +1,11 @@
-from keras.models import Model, load_model
-from keras.layers import Dense, BatchNormalization, Dropout, GlobalAveragePooling2D
-from keras.applications.mobilenet import relu6, DepthwiseConv2D
+from keras.layers import BatchNormalization
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import GlobalAveragePooling2D
+from keras.models import load_model
+from keras.models import Model
+from keras.applications.mobilenet import relu6
+from keras.applications.mobilenet import DepthwiseConv2D
 from keras.utils.generic_utils import CustomObjectScope
 
 from keras.applications import (

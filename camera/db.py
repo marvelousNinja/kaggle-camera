@@ -1,6 +1,9 @@
 import os
-from dotenv import load_dotenv, find_dotenv
-from tinydb import TinyDB, Query
+
+from dotenv import find_dotenv
+from dotenv import load_dotenv
+from tinydb import TinyDB
+from tinydb import Query
 
 load_dotenv(find_dotenv())
 

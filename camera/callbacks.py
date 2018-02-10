@@ -1,6 +1,7 @@
 import numpy as np
-from keras.callbacks import Callback
 import keras.backend as K
+from keras.callbacks import Callback
+
 from camera.networks import unfreeze_all_layers
 
 class Unfreeze(Callback):

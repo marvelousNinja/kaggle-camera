@@ -1,16 +1,21 @@
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
-from tqdm import tqdm
-from fire import Fire
-from dotenv import load_dotenv, find_dotenv
+
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv, find_dotenv
+from fire import Fire
 from scipy.stats.mstats import gmean
-from camera.utils import in_batches, generate_samples, generate_submission_name
-from camera.pipelines import tta_submission_pipeline
-from camera.data import get_test_dataset, inverse_label_mapping
+from tqdm import tqdm
+
+from camera.data import get_test_dataset
+from camera.data import inverse_label_mapping
 from camera.networks import load
+from camera.pipelines import tta_submission_pipeline
+from camera.utils import generate_samples
+from camera.utils import generate_submission_name
+from camera.utils import in_batches
 
 load_dotenv(find_dotenv())
 

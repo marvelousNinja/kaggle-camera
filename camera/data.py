@@ -1,23 +1,18 @@
 import os
 import glob
-import numpy as np
-import jpeg4py as jpeg
-import cv2
 
-def read_png(path):
+import cv2
+import numpy as np
+
+def read_image(path):
     return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
 
-def read_jpeg(path):
-    # TODO AS: Doesn't work with some images
-    # return jpeg.JPEG(str(path)).decode()
-    return read_png(path)
-
-def read_jpeg_cached(cache, preprocess, path):
+def read_image_cached(cache, preprocess, path):
     image = cache.get(path)
     if image is not None:
         return image
     else:
-        image = preprocess(read_jpeg(path))
+        image = preprocess(read_image(path))
         cache[path] = image
         return image
 
@@ -70,20 +65,6 @@ def list_unencoded_samples(path):
 
     return image_paths_and_labels
 
-def list_whitelisted_samples_in(path):
-    image_paths_and_labels = list()
-    mapping = label_mapping()
-
-    for label in list_dirs_in(path):
-        assemble_path = lambda filename: os.path.join(path, label, filename)
-        with open(os.path.join(path, label, '_whitelist')) as whitelist:
-            image_names = whitelist.read().splitlines()
-
-        image_paths = map(assemble_path, image_names)
-        image_paths_and_labels.extend(map(lambda path: [path, mapping[label]], image_paths))
-
-    return image_paths_and_labels
-
 def train_test_holdout_split(samples, seed=11):
     np.random.seed(seed)
     shuffled_samples = list(samples)
@@ -103,12 +84,3 @@ def get_datasets(data_dir):
 
 def get_test_dataset(data_dir):
     return list_images_in(os.path.join(data_dir, 'test'))
-
-def get_flickr_dataset(data_dir):
-    return list_whitelisted_samples_in(os.path.join(data_dir, 'flickr'))
-
-def get_reviews_dataset(data_dir):
-    return list_whitelisted_samples_in(os.path.join(data_dir, 'reviews'))
-
-def get_scrapped_dataset(data_dir):
-    return list_all_samples_in(os.path.join(data_dir, 'scrapped'))

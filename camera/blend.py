@@ -1,10 +1,14 @@
 import os
+
 import pandas as pd
 import numpy as np
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from fire import Fire
-from dotenv import find_dotenv, load_dotenv
 from scipy.stats import mode
+
 from camera.utils import generate_blend_submission_name
+
 load_dotenv(find_dotenv())
 
 def blend(*files, data_dir=os.environ['DATA_DIR'], index_name='fname', target_name='camera'):

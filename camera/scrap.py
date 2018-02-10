@@ -1,16 +1,19 @@
 import os
+from datetime import datetime
 from functools import partial
 from multiprocessing.pool import ThreadPool
-from datetime import datetime
 from urllib.request import urlopen
-from tqdm import tqdm
+
 import numpy as np
+import wget
+from bs4 import BeautifulSoup
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from fire import Fire
 from flickrapi import FlickrAPI
-from dotenv import load_dotenv, find_dotenv
-import wget
 from retry.api import retry_call
-from bs4 import BeautifulSoup
+from tqdm import tqdm
+
 load_dotenv(find_dotenv())
 
 def download_image(directory, url):

@@ -1,13 +1,18 @@
 import os
-import numpy as np
 from functools import partial
-from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
-from dotenv import load_dotenv, find_dotenv
+
+import numpy as np
+from dotenv import load_dotenv
+from dotenv import find_dotenv
 from fire import Fire
-import shell
 from shell import shell
-from camera.db import insert_multiple, find_by_path, remove, find_by
+from tqdm import tqdm
+
+from camera.db import insert_multiple
+from camera.db import find_by_path
+from camera.db import remove
+from camera.db import find_by
 from camera.data import list_unencoded_samples
 
 load_dotenv(find_dotenv())
