@@ -31,19 +31,14 @@ def download_image(directory, url):
 
 def scrap_flickr(label, api_key, secret, page):
     label_to_camera = {
-        # TODO AS: Make sure camera is the same
-        # 'Motorola-Droid-Maxx': 'motorola/moto_maxx' # only 9 images
-        'Motorola-Droid-Maxx': 'motorola/droid_ultra', # lots
-        # TODO AS: Make sure camera is the same
-        # 'HTC-1-M7': 'htc/one_m7', # 150 somewhat images
-        'HTC-1-M7': 'htc/one', # lots
-        'iPhone-4s': 'apple/iphone_4s', # lots
-        'iPhone-6': 'apple/iphone_6', # lots
-        'Sony-NEX-7': 'sony/nex-7', # lots
-        'Samsung-Galaxy-S4': 'samsung/galaxy_s4', # lots
-        'Samsung-Galaxy-Note3': 'samsung/galaxy-note-3', # lots
-        'Motorola-Nexus-6': 'motorola/nexus_6', # lots
-        #'Motorola-X': 'motorola/moto_x' # lots
+        'Motorola-Droid-Maxx': 'motorola/droid_ultra',
+        'HTC-1-M7': 'htc/one',
+        'iPhone-4s': 'apple/iphone_4s',
+        'iPhone-6': 'apple/iphone_6',
+        'Sony-NEX-7': 'sony/nex-7',
+        'Samsung-Galaxy-S4': 'samsung/galaxy_s4',
+        'Samsung-Galaxy-Note3': 'samsung/galaxy-note-3',
+        'Motorola-Nexus-6': 'motorola/nexus_6'
     }
 
     if label == 'LG-Nexus-5x':
@@ -52,29 +47,24 @@ def scrap_flickr(label, api_key, secret, page):
             'extras': 'url_o',
             'per_page': 500,
             'page': page,
-            # October of 2015, release date for 2nd Gen
+            # Released in October 2015
             'min_taken_date': 1443646800
         }
     elif label == 'Motorola-X':
         params = {
-            # 'camera': 'motorola/moto_x',
             'text': 'motorola moto x',
             'extras': 'url_o',
             'per_page': 500,
             'page': page,
-            # September of 2014, release date
+            # Released in September 2014
             'min_taken_date': 1409518800
         }
     else:
         params = {
-            # cm=label_to_camera[label],
             'camera': label_to_camera[label],
             'extras': 'url_o',
             'per_page': 500,
             'page': page
-            # TODO AS: Should I make results predictable and use pagination?
-            # TODO AS: We can always fetch a random page
-            # sort='date-posted-desc'
         }
 
     flickr = FlickrAPI(api_key, secret, format='parsed-json')
