@@ -1,3 +1,4 @@
+"""Data processing pipelines"""
 from functools import partial
 
 import numpy as np

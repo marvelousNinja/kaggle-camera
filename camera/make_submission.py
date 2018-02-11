@@ -1,3 +1,4 @@
+"""Submission generation commands"""
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool

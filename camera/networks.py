@@ -1,3 +1,4 @@
+"""Network architectures and utils"""
 from keras.layers import BatchNormalization
 from keras.layers import Dense
 from keras.layers import Dropout

@@ -1,3 +1,4 @@
+"""Misc functions what do not belong to other modules"""
 import os
 from datetime import datetime
 
