@@ -1,3 +1,4 @@
+"""Simple document-based storage"""
 import os
 
 from dotenv import find_dotenv
@@ -7,7 +8,7 @@ from tinydb import Query
 
 load_dotenv(find_dotenv())
 
-db = TinyDB(os.path.join(os.environ['DATA_DIR'], 'tinydb.json'))
+db = TinyDB(os.path.join(os.environ['DATA_DIR'], 'tinydb.json')) # pylint: disable=invalid-name
 
 def insert(record):
     return db.insert(record)
@@ -23,9 +24,6 @@ def remove(ids):
 
 def find_by(func):
     return db.search(func(Query()))
-
-def all():
-    return db.all()
 
 if __name__ == '__main__':
     import pdb; pdb.set_trace()

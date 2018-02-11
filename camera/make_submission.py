@@ -15,12 +15,11 @@ from camera.networks import load
 from camera.pipelines import tta_submission_pipeline
 from camera.utils import generate_samples
 from camera.utils import generate_submission_name
-from camera.utils import in_batches
 
 load_dotenv(find_dotenv())
 
 def make_submission(
-        path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
+        path, data_dir=os.environ['DATA_DIR'], crop_size=224,
         image_filter=None
     ):
     test = get_test_dataset(data_dir)
@@ -37,16 +36,14 @@ def make_submission(
         predictions.append(gmean(tta_predictions, axis=0))
 
     predictions = np.array(predictions)
-
-    network_name = os.path.basename(path)
-    submission_path = os.path.join(data_dir, 'submissions', generate_submission_name(network_name))
+    submission_path = os.path.join(data_dir, 'submissions', generate_submission_name(path))
     label_mapping = inverse_label_mapping()
-    df = pd.DataFrame({
-        'fname': list(map(lambda path: os.path.basename(path), test)),
+    submission = pd.DataFrame({
+        'fname': list(map(os.path.basename, test)),
         'camera': list(map(lambda code: label_mapping[code], np.argmax(predictions, axis=1)))
     })
 
-    df.to_csv(submission_path, index=False)
+    submission.to_csv(submission_path, index=False)
     print(f'Submission file generated at {submission_path}')
 
 if __name__ == '__main__':

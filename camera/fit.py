@@ -1,3 +1,4 @@
+"""Model training commands"""
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
@@ -10,7 +11,6 @@ from keras.optimizers import SGD
 from keras.optimizers import Adam
 from keras.callbacks import ReduceLROnPlateau
 from keras.callbacks import ModelCheckpoint
-from sklearn.utils.class_weight import compute_class_weight
 
 from camera.callbacks import Unfreeze
 from camera.callbacks import SwitchOptimizer
@@ -20,6 +20,7 @@ from camera.networks import get_model
 from camera.pipelines import training_pipeline
 from camera.pipelines import validation_pipeline
 from camera.custom_datasets import get_scrapped_dataset
+from camera.utils import calculate_class_weights
 from camera.utils import generate_model_name
 from camera.utils import generate_samples
 from camera.utils import in_loop
@@ -30,22 +31,20 @@ load_dotenv(find_dotenv())
 def fit(
         data_dir=os.environ['DATA_DIR'], lr=0.0001, batch_size=16,
         crop_size=224, network=None, image_filter=None, overfit_run=False,
-        allow_weights=True, allow_flips=True, callbacks=['reduce_lr'],
-        min_quality=95, unfreeze_at=0, switch_at=13
-    ):
+        allow_weights=True, allow_flips=True, callbacks=None,
+        unfreeze_at=0, switch_at=13
+    ): # pylint: disable=too-many-arguments
 
-    train, validation, _ = get_datasets(data_dir)
     # TODO AS: Parametrize the dataset
-    train = get_scrapped_dataset(min_quality)
+    _, validation, _ = get_datasets(data_dir)
+    train = get_scrapped_dataset()
     np.random.shuffle(train)
 
     if overfit_run:
         train = train[:batch_size]
         validation = validation[:batch_size]
 
-    classes = np.unique(train[:, 1])
-    weights = compute_class_weight('balanced', np.unique(train[:, 1]), train[:, 1])
-    class_weight = dict(zip(classes, weights))
+    class_weight = calculate_class_weights(train[:, 1])
 
     pool = ThreadPool(initializer=np.random.seed)
     process_training_image = partial(

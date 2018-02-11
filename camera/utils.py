@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import numpy as np
+from sklearn.utils.class_weight import compute_class_weight
 
 def pipe(funcs, target):
     result = target
@@ -54,9 +55,10 @@ def generate_model_name(network, crop_size):
     timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
     return f'{network}-{crop_size}-{timestr}-' + '{epoch:02d}-{val_acc:.5f}-{val_loss:.5f}.hdf5'
 
-def generate_submission_name(network):
+def generate_submission_name(model_path):
+    model_name = os.path.basename(model_path)
     timestr = datetime.utcnow().strftime('%Y%m%d_%H%M')
-    return f'submission-{timestr}-{network[:-5]}.csv'
+    return f'submission-{timestr}-{model_name[:-5]}.csv'
 
 def generate_blend_submission_name(files):
     shortened_name = '__'.join(map(lambda path: os.path.basename(path)[11:35], files))
@@ -69,3 +71,8 @@ def generate_samples(pool, shuffle, pipeline, records):
 
 def in_loop(initializer):
     while True: yield from initializer()
+
+def calculate_class_weights(all_labels):
+    labels = np.unique(all_labels)
+    weights = compute_class_weight('balanced', np.unique(labels), all_labels)
+    return dict(zip(labels, weights))

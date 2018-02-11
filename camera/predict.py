@@ -14,18 +14,14 @@ from sklearn.metrics import log_loss
 from scipy.stats.mstats import gmean
 
 from camera.data import get_datasets
-from camera.custom_datasets import get_scrapped_dataset
 from camera.networks import load
 from camera.pipelines import tta_pipeline
-from camera.utils import generate_model_name
-from camera.utils import in_x_y_s_batches
 from camera.utils import generate_samples
-from camera.utils import only_at
 
 load_dotenv(find_dotenv())
 
 def predict(
-        path, data_dir=os.environ['DATA_DIR'], batch_size=16, crop_size=224,
+        path, data_dir=os.environ['DATA_DIR'], crop_size=224,
         image_filter=None
     ):
 

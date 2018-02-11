@@ -1,3 +1,4 @@
+"""Data filters and loading utils to build custom datasets"""
 import pandas as pd
 
 from camera.db import find_by
@@ -23,7 +24,7 @@ def get_motorola_x_samples(samples):
         (samples.software == '')
     ]
 
-def get_motorolla_maxx_samples(samples):
+def get_motorola_maxx_samples(samples):
     valid_models = ['XT1080']
     return samples[
         (samples.model.isin(valid_models)) &
@@ -37,7 +38,7 @@ def get_motorolla_nexus6_samples(samples):
         ((samples.model == 'Nexus 6') & (samples.software.str.match('HDR')))
     ]
 
-def get_samsung_galaxy_note3_samples(samples):
+def get_samsung_galaxy_note3_samples(samples): # pylint: disable=invalid-name
     valid_models = ['SAMSUNG-SM-N900A', 'SM-N900P', 'SM-N9005', 'SM-N900A']
     software_patterns = ['N900']
     return samples[
@@ -77,37 +78,21 @@ def get_iphone6_samples(samples):
         (samples.software.str.match('|'.join(software_patterns)))
     ]
 
-def filtered_samples(dataset):
-    samples = find_by(lambda q: q.dataset == dataset)
-    samples = pd.DataFrame(samples)
-    return pd.concat([
-        get_lg_nexus5x_samples(samples),
-        get_htc_one_samples(samples),
-        get_motorola_x_samples(samples),
-        get_motorolla_maxx_samples(samples),
-        get_motorolla_nexus6_samples(samples),
-        get_samsung_galaxy_note3_samples(samples),
-        get_samsung_galaxy_s4_samples(samples),
-        get_iphone4s_samples(samples),
-        get_iphone6_samples(samples),
-        get_sony_nex7_samples(samples)
-    ])
-
-def get_scrapped_dataset_unmapped(min_quality):
+def get_scrapped_samples():
     scrapped = find_by(lambda q: q.dataset == 'scrapped')
     scrapped = pd.DataFrame(scrapped)
 
     scrapped = scrapped[
         (scrapped.height > 780) &
         (scrapped.width > 780) &
-        (scrapped.quality >= min_quality)
+        (scrapped.quality >= 95)
     ]
 
     scrapped = pd.concat([
         get_lg_nexus5x_samples(scrapped),
         get_htc_one_samples(scrapped),
         get_motorola_x_samples(scrapped),
-        get_motorolla_maxx_samples(scrapped),
+        get_motorola_maxx_samples(scrapped),
         get_motorolla_nexus6_samples(scrapped),
         get_samsung_galaxy_note3_samples(scrapped),
         get_samsung_galaxy_s4_samples(scrapped),
@@ -118,12 +103,14 @@ def get_scrapped_dataset_unmapped(min_quality):
 
     return scrapped
 
-def get_scrapped_dataset(min_quality=95):
-    samples = get_scrapped_dataset_unmapped(min_quality)
+def get_scrapped_dataset():
+    """Collect scrapped dataset samples as a list of (local_path, label) pairs
+    """
+    samples = get_scrapped_samples()
     samples['label'] = samples.label.map(label_mapping())
     return samples[['path', 'label']].values
 
 if __name__ == '__main__':
-    print(get_scrapped_dataset_unmapped(95).groupby(['label', 'make', 'model']).size())
-    print(get_scrapped_dataset_unmapped(95).groupby(['label']).size().sort_values())
+    print(get_scrapped_samples().groupby(['label', 'make', 'model']).size())
+    print(get_scrapped_samples().groupby(['label']).size().sort_values())
     import pdb; pdb.set_trace()

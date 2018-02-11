@@ -1,16 +1,15 @@
+"""Commands related to image metadata extraction"""
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
 
-import numpy as np
-from dotenv import load_dotenv
 from dotenv import find_dotenv
+from dotenv import load_dotenv
 from fire import Fire
 from shell import shell
 from tqdm import tqdm
 
 from camera.db import insert_multiple
-from camera.db import find_by_path
 from camera.db import remove
 from camera.db import find_by
 from camera.data import list_unencoded_samples
@@ -26,7 +25,7 @@ def extract_single(dataset, path_and_label):
         tqdm.write(str(outcome.errors()))
 
         if len(outcome.output()) == 0:
-            return
+            return None
 
     # Motorola__XT1080__Apobe Photoshop 3.0__JPEG__95__2432x4320
     make, model, software, ext, quality, dimensions = outcome.output()[0].split('__')

@@ -1,10 +1,8 @@
 import os
-from datetime import datetime
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from urllib.request import urlopen
 
-import numpy as np
 import wget
 from bs4 import BeautifulSoup
 from dotenv import find_dotenv
@@ -24,12 +22,12 @@ def download_image(directory, url):
 
     local_path = os.path.join(directory, filename)
     if os.path.isfile(local_path):
-        return
+        return None
 
     try:
         retry_call(lambda: wget.download(url, local_path, bar=None), tries=2, delay=1)
         return local_path
-    except Exception as e:
+    except Exception as e: # pylint: disable=broad-except
         print(e)
 
 def scrap_flickr(label, api_key, secret, page):

@@ -139,5 +139,5 @@ def get_model(name):
     }[name]
 
 def load(path):
-    with CustomObjectScope({ 'relu6': relu6, 'DepthwiseConv2D': DepthwiseConv2D }):
+    with CustomObjectScope({'relu6': relu6, 'DepthwiseConv2D': DepthwiseConv2D}):
         return load_model(path)

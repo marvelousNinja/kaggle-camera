@@ -1,3 +1,4 @@
+"""Submission blending utils"""
 import os
 
 import pandas as pd
@@ -12,6 +13,9 @@ from camera.utils import generate_blend_submission_name
 load_dotenv(find_dotenv())
 
 def blend(*files, data_dir=os.environ['DATA_DIR'], index_name='fname', target_name='camera'):
+    """Blends several classification submissions by majority vote
+    """
+
     submissions = [pd.read_csv(file, index_col=index_name) for file in files]
     index = submissions[0].index
     values = np.empty((len(index), len(submissions)), dtype=object)

@@ -1,3 +1,4 @@
+"""Utility methods to work with images in filesystem"""
 import os
 import glob
 
@@ -43,7 +44,7 @@ def label_mapping():
 
 def inverse_label_mapping():
     mapping = label_mapping()
-    return { v: k for k, v in mapping.items() }
+    return {v: k for k, v in mapping.items()}
 
 def list_all_samples_in(path):
     image_paths_and_labels = list()
@@ -51,6 +52,7 @@ def list_all_samples_in(path):
 
     for label in list_dirs_in(path):
         image_paths = list_images_in(os.path.join(path, label))
+        # pylint: disable=cell-var-from-loop
         image_paths_and_labels.extend(map(lambda path: [path, mapping[label]], image_paths))
 
     return image_paths_and_labels
@@ -61,6 +63,7 @@ def list_unencoded_samples(path):
 
     for label in list_dirs_in(path):
         image_paths = list_images_in(os.path.join(path, label))
+        # pylint: disable=cell-var-from-loop
         image_paths_and_labels.extend(map(lambda path: [path, label], image_paths))
 
     return image_paths_and_labels
