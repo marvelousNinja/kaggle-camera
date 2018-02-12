@@ -44,8 +44,6 @@ def fit(
         train = train[:batch_size]
         validation = validation[:batch_size]
 
-    class_weight = calculate_class_weights(train[:, 1])
-
     pool = ThreadPool(initializer=np.random.seed)
     process_training_image = partial(
         training_pipeline, dict(), image_filter, allow_flips, allow_weights, crop_size
@@ -77,7 +75,7 @@ def fit(
         validation_data=validation_generator,
         steps_per_epoch=int(np.ceil(len(train) / batch_size)),
         validation_steps=int(np.ceil(len(validation) / batch_size)),
-        class_weight=class_weight,
+        class_weight=calculate_class_weights(train[:, 1]),
         epochs=200,
         verbose=2,
         callbacks=[
