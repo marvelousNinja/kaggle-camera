@@ -17,10 +17,10 @@ from camera.data import list_unencoded_samples
 load_dotenv(find_dotenv())
 
 def extract_single(dataset, path_and_label):
-    path = path_and_label[0]
-    label = path_and_label[1]
+    path, label = path_and_label
+    metadata_format = "%[EXIF:Make]__%[EXIF:Model]__%[EXIF:Software]__%m__%Q__%G"
+    outcome = shell(f'identify -format "{metadata_format}" {path}')
 
-    outcome = shell(f'identify -format "%[EXIF:Make]__%[EXIF:Model]__%[EXIF:Software]__%m__%Q__%G" {path}')
     if len(outcome.errors()) > 0:
         tqdm.write(str(outcome.errors()))
 
@@ -45,6 +45,9 @@ def extract_single(dataset, path_and_label):
     }
 
 def extract_metadata(data_dir=os.environ['DATA_DIR'], rewrite=False, dataset='scrapped'):
+    """Extracts metadata from images and saves it to the database.
+    Can be used repeatedly to extract metadata from new images
+    """
     paths_and_labels = list_unencoded_samples(os.path.join(data_dir, dataset))
     pairs_to_process = list()
     dataset_docs = find_by(lambda q: q.dataset == dataset)

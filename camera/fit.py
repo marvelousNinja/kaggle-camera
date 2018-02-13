@@ -31,9 +31,9 @@ load_dotenv(find_dotenv())
 def fit(
         data_dir=os.environ['DATA_DIR'], lr=0.0001, batch_size=16,
         crop_size=224, network=None, image_filter=None, overfit_run=False,
-        allow_weights=True, allow_flips=True, callbacks=None,
+        allow_weights=True, allow_flips=True, callbacks=['switch', 'reduce_lr'],
         unfreeze_at=0, switch_at=13
-    ): # pylint: disable=too-many-arguments
+    ): # pylint: disable=too-many-arguments,dangerous-default-value
 
     # TODO AS: Parametrize the dataset
     _, validation, _ = get_datasets(data_dir)
