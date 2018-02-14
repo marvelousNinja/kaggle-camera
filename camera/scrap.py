@@ -32,58 +32,39 @@ def download_image(directory, url):
         print(e)
 
 def scrap_flickr(label, api_key, secret, page):
-    label_to_camera = {
-        'Motorola-Droid-Maxx': 'motorola/droid_ultra',
-        'HTC-1-M7': 'htc/one',
-        'iPhone-4s': 'apple/iphone_4s',
-        'iPhone-6': 'apple/iphone_6',
-        'Sony-NEX-7': 'sony/nex-7',
-        'Samsung-Galaxy-S4': 'samsung/galaxy_s4',
-        'Samsung-Galaxy-Note3': 'samsung/galaxy-note-3',
-        'Motorola-Nexus-6': 'motorola/nexus_6'
+    label_to_params = {
+        'Motorola-Droid-Maxx': {'camera': 'motorola/droid_ultra'},
+        'HTC-1-M7': {'camera': 'htc/one'},
+        'iPhone-4s': {'camera': 'apple/iphone_4s'},
+        'iPhone-6': {'camera': 'apple/iphone_6'},
+        'Sony-NEX-7': {'camera' : 'sony/nex-7'},
+        'Samsung-Galaxy-S4': {'camera': 'samsung/galaxy_s4'},
+        'Samsung-Galaxy-Note3': {'camera': 'samsung/galaxy-note-3'},
+        'Motorola-Nexus-6': {'camera': 'motorola/nexus_6'},
+        'LG-Nexus-5x': {'text': 'nexus 5x', 'min_taken_date': 1443646800},
+        'Motorola-X': {'text': 'motorola moto x', 'min_taken_date': 1409518800}
     }
 
-    if label == 'LG-Nexus-5x':
-        params = {
-            'text': 'nexus 5x',
-            'extras': 'url_o',
-            'per_page': 500,
-            'page': page,
-            # Released in October 2015
-            'min_taken_date': 1443646800
-        }
-    elif label == 'Motorola-X':
-        params = {
-            'text': 'motorola moto x',
-            'extras': 'url_o',
-            'per_page': 500,
-            'page': page,
-            # Released in September 2014
-            'min_taken_date': 1409518800
-        }
-    else:
-        params = {
-            'camera': label_to_camera[label],
-            'extras': 'url_o',
-            'per_page': 500,
-            'page': page
-        }
+    params = {
+        'extras': 'url_o',
+        'per_page': 500,
+        'page': page,
+        **label_to_params[label]
+    }
 
     flickr = FlickrAPI(api_key, secret, format='parsed-json')
     response = flickr.photos.search(**params)
-
-    print('Number of pages', response['photos']['pages'])
     photos = response['photos']['photo']
-
     urls = [photo.get('url_o', None) for photo in photos]
     return list(filter(None, urls))
 
 def scrap_yandex(model, product_id, page):
     if product_id:
-        html = urlopen(f'https://fotki.yandex.ru/search.xml?modelid={product_id}&p={page}&how=created').read()
+        url = f'https://fotki.yandex.ru/search.xml?modelid={product_id}&p={page}&how=created'
     else:
-        html = urlopen(f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model&how=created').read()
+        url = f'https://fotki.yandex.ru/search.xml?text={model}&p={page}&type=model&how=created'
 
+    html = urlopen(url).read()
     soup = BeautifulSoup(html, 'html.parser')
     photo_links = soup.select('a.preview-link img')
     urls = list(map(lambda link: link['src'], photo_links))
@@ -93,7 +74,7 @@ def scrap(
         label=None, data_dir=os.environ['DATA_DIR'],
         api_key=os.environ['FLICKR_API_KEY'], secret=os.environ['FLICKR_SECRET'],
         page_from=0, page_to=1, model=None, product_id=None
-    ):
+    ): # pylint: disable=too-many-arguments
 
     label_directory = os.path.join(data_dir, 'scrapped', label)
     if not os.path.isdir(label_directory):
