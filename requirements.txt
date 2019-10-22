@@ -41,7 +41,7 @@ oauthlib==2.0.6
 opencv-contrib-python==3.4.0.12
 pandas==0.22.0
 pbr==3.1.1
-Pillow==5.0.0
+Pillow==6.2.0
 pluggy==0.6.0
 prettytable==0.7.2
 progressbar2==3.34.3
