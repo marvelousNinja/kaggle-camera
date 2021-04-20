@@ -46,7 +46,7 @@ pluggy==0.6.0
 prettytable==0.7.2
 progressbar2==3.34.3
 protobuf==3.5.1
-py==1.5.2
+py==1.10.0
 pycparser==2.18
 pylint==1.8.1
 pyparsing==2.2.0
