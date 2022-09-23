@@ -45,7 +45,7 @@ Pillow==5.0.0
 pluggy==0.6.0
 prettytable==0.7.2
 progressbar2==3.34.3
-protobuf==3.5.1
+protobuf==3.18.3
 py==1.5.2
 pycparser==2.18
 pylint==1.8.1
