@@ -22,7 +22,7 @@ html5lib==0.9999999
 idna==2.6
 invoke==0.22.0
 isort==4.2.15
-joblib==0.11
+joblib==1.2.0
 jpeg4py==0.1.2
 kaggle-cli==0.12.13
 Keras==2.1.3
